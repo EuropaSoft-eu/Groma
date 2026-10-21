@@ -117,6 +117,24 @@
       .concat([CHAMP_OBSERVATIONS.cle]);
   }
 
+  /**
+   * Colonnes retirées de l'export SIG. Elles décrivent l'acquisition GPS, pas
+   * l'ouvrage, et l'agent recale souvent le point sur la photo aérienne : la
+   * précision du récepteur ne décrit alors plus la position écrite (décision de
+   * Yoann, 21/10/2026). Le fichier de travail les garde toutes — c'est lui qui
+   * sert à la sauvegarde et au réimport.
+   */
+  var COLONNES_HORS_SIG = [
+    'precision_m', 'dispersion_m', 'methode_gps', 'nb_mesures', 'duree_gps_s',
+    'position_ajustee', 'ecart_ajustement_m'
+  ];
+
+  function colonnesSig(filiereId) {
+    return colonnesFiliere(filiereId).filter(function (c) {
+      return COLONNES_HORS_SIG.indexOf(c) === -1;
+    });
+  }
+
   function filiere(id) {
     return FILIERES.filter(function (f) { return f.id === id; })[0] || null;
   }
@@ -149,6 +167,7 @@
     DECIMALES: DECIMALES,
     CONFIG_DEFAUT: CONFIG_DEFAUT,
     colonnesFiliere: colonnesFiliere,
+    colonnesSig: colonnesSig,
     filiere: filiere,
     champsDe: champsDe
   };

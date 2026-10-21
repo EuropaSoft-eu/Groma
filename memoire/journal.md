@@ -7,6 +7,38 @@ Une entrée par session de travail, la plus récente en haut.
 
 ---
 
+## 21/10/2026 — Export SIG allégé
+
+**Demande :** dans QGIS, trop de colonnes. Les colonnes GPS (`precision_m`,
+`dispersion_m`, `methode_gps`, `nb_mesures`, `duree_gps_s`, `position_ajustee`,
+`ecart_ajustement_m`) n'ont pas d'intérêt pour Yoann : le point est souvent recalé
+sur la photo aérienne, la précision du récepteur ne décrit alors plus la position.
+
+- **Pas de retrait dans le fichier complet** : il sert de sauvegarde et de réimport
+  (`id` pour la fusion, `filiere` comme garde-fou, `reference` pour les compteurs,
+  invariant 12 sur la précision).
+- Nouveau bouton **« Export SIG »** par filière (Configuration › Fichiers) :
+  `spanc-sig-AAAA-MM-JJ.geojson`, colonnes = `Cfg.colonnesSig()` = colonnes de la
+  filière moins `COLONNES_HORS_SIG`.
+- Le fichier porte un membre étranger `"groma_export": "sig"` (RFC 7946 § 6.1).
+  `fusionnerReleves` et `reprendreFichierDuDossier` le refusent : réimporté sur une
+  autre tablette, il créerait des relevés amputés.
+- L'export SIG **n'appelle pas `marquerSauvegarde`** : il ne peut pas restaurer.
+- J'ai prévenu Yoann (21/10/2026) : un point **non recalé** n'a plus d'indicateur de
+  fiabilité dans QGIS. Il a maintenu la décision.
+- `VERSION` → `groma-4` : `app.js` appelle des fonctions nouvelles de `config.js` et
+  `geojson.js`, les trois doivent arriver ensemble.
+- Vérifié : audits responsive et PWA sans défaut ; test Playwright jetable —
+  11 colonnes exportées, géométrie intacte, alerte de sauvegarde inchangée, réimport
+  du fichier SIG refusé avec message, aucune erreur JS.
+
+**Défaut existant relevé, non corrigé :** `actionOuvrirFichier` (« Lier un
+existant ») appelle `synchroniserFichier` même quand `fusionnerReleves` a refusé le
+fichier (illisible, autre filière, export SIG). Le fichier choisi est alors écrasé
+sans avoir été repris, contrairement à l'esprit de l'invariant 27.
+
+---
+
 ## 08/10/2026 (fin de soirée) — Nouveau logo
 
 **Demande :** un logo plus sympa. L'écran d'accueil de l'iPhone affichait un « G »
