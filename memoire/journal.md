@@ -7,6 +7,37 @@ Une entrée par session de travail, la plus récente en haut.
 
 ---
 
+## 21/10/2026 (suite) — Date et résultat du dernier contrôle SPANC
+
+**Demande :** voir dans QGIS la date du dernier contrôle, puis si le contrôle est
+bon ou non.
+
+- Yoann a choisi le **contrôle réglementaire** (saisi à la main), plutôt que le
+  dernier passage terrain (produit par l'application). C'est une **exception à
+  l'invariant 1** (cascade + note), décidée en connaissance de cause, **SPANC seul**.
+- Deux champs déclarés dans `FILIERES[spanc].champs` : `date_dernier_controle`
+  (`input type=date`, `max` = aujourd'hui, posé à l'ouverture de la fenêtre) et
+  `resultat_controle` (liste). `champsDe()` et `colonnesFiliere()` les insèrent
+  entre la cascade et la note : formulaire, fichier, filtre et export SIG suivent.
+- Résultat : les quatre classes de l'arrêté du 27 avril 2012 (conforme ; non
+  conforme, travaux sous 4 ans ; non conforme, travaux en cas de vente ; absence
+  d'installation). **Liste citée de mémoire**, à confronter au règlement de service
+  du SPANC de la CC Sundgau. « Conforme / non conforme » écarté : il confond deux
+  niveaux d'obligation.
+- `requisAvec` : la date et le résultat se remplissent ensemble ou pas du tout.
+- Valeur hors liste (fichier importé, libellé changé) : réaffichée
+  « (hors liste) » et conservée, sur le modèle de la cascade.
+- « Dupliquer » ne reprend pas le contrôle : il vaut pour une installation précise.
+- Liste des relevés : ligne « Contrôle du JJ/MM/AAAA : résultat ».
+- `docs/RGPD.md` : un résultat « non conforme » rattaché à un foyer aggrave l'enjeu.
+- Vérifié : audits sans défaut ; test Playwright jetable — champ absent d'EAU,
+  `max` à la date du jour, résultat sans date refusé avec message, enregistrement,
+  affichage en liste, valeur hors liste conservée à la modification, export SIG à
+  13 colonnes, 280 px sans débordement, aucune erreur JS.
+- Pas de nouvelle montée de `VERSION` : `groma-4` n'est pas encore publiée.
+
+---
+
 ## 21/10/2026 — Export SIG allégé
 
 **Demande :** dans QGIS, trop de colonnes. Les colonnes GPS (`precision_m`,

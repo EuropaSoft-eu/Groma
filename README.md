@@ -290,9 +290,18 @@ les niveaux de la cascade : ils décrivent **ce qu'est** l'ouvrage. `observation
 **ce qui cloche** — tampon scellé, accès par la cour du 12, vanne bloquée. Le
 catalogue ne peut pas prévoir ça.
 
-Les filières ont aujourd'hui les mêmes champs mais gardent chacune leur
-fichier : `filiere` sert de garde-fou à l'import, et rien n'oblige les trois à rester
-alignées si une d'elles a besoin d'un champ propre.
+**SPANC a deux champs de plus**, saisis entre la cascade et la note :
+`date_dernier_controle` (AAAA-MM-JJ) et `resultat_controle` (`Conforme`,
+`Non conforme, travaux sous 4 ans`, `Non conforme, travaux en cas de vente`,
+`Absence d'installation`). Ils se remplissent ensemble ou pas du tout. Ils servent
+à repérer dans QGIS les installations à recontrôler.
+
+Chaque filière garde son fichier : `filiere` sert de garde-fou à l'import, et c'est
+ce qui permet à une filière d'avoir des champs propres, comme SPANC.
+
+**Export SIG** : un second GeoJSON, allégé pour QGIS, sans les sept colonnes GPS
+(`precision_m` à `ecart_ajustement_m`). Il ne sert pas de sauvegarde et l'import le
+refuse.
 
 ### `parametres.csv` — le catalogue de matériel
 

@@ -69,9 +69,15 @@ navigateur headless sur quinze formats, de 280 px à 1180 px, portrait et paysag
    par l'application (`COLONNES_TECHNIQUES`), soit un niveau de cascade — le
    formulaire ne se regarnit pas champ par champ. La note est l'exception assumée :
    elle porte ce qu'aucune nomenclature ne prévoit.
+   **Seconde exception, SPANC seul (21/10/2026)** : `date_dernier_controle` et
+   `resultat_controle`, déclarés dans `champs` de la filière (config.js). Ils
+   viennent d'un dossier, pas du terrain, et l'application ne peut pas les
+   produire. Ils vont ensemble (`requisAvec`). Une valeur de résultat inconnue
+   de la liste est réaffichée « (hors liste) », jamais effacée. Toute nouvelle
+   demande de champ se pèse contre ce précédent : ce n'en est pas une porte ouverte.
 2. **Un GeoJSON par filière** (`eau.geojson`, `assainissement.geojson`,
-   `spanc.geojson`, `voirie.geojson`). Toutes ont aujourd'hui les mêmes vingt et un
-   champs, mais gardent chacune leur fichier : le champ `filiere` est le garde-fou à
+   `spanc.geojson`, `voirie.geojson`). SPANC a deux champs de plus
+   que les autres (contrôle). Chacune garde son fichier : le champ `filiere` est le garde-fou à
    l'import, et rien ne les oblige à rester alignées. Le stockage interne, lui, reste un stock
    unique.
    **`parametres.csv` est le quatrième fichier** : il porte le catalogue, pas des

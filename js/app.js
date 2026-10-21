@@ -81,6 +81,13 @@
     });
   }
 
+  /** `2023-05-14` → `14/05/2023`, sans passer par `Date` : un jour civil
+   *  converti en instant UTC reculerait d'un jour à l'ouest de Greenwich. */
+  function dateJourFr(jour) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(jour || '');
+    return m ? m[3] + '/' + m[2] + '/' + m[1] : jour;
+  }
+
   function idUnique() {
     return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
   }
@@ -604,6 +611,53 @@
     ]);
   }
 
+  /**
+   * `max` posé à l'ouverture de la fenêtre, pas ici : l'application reste
+   * ouverte des jours sur une tablette, une date figée au démarrage vieillirait.
+   */
+  function construireChampDate(filiereId, champ) {
+    var idChamp = filiereId + '-' + champ.cle;
+    return el('div', { classe: 'champ' }, [
+      el('label', { for: idChamp, texte: champ.label }),
+      el('input', { type: 'date', id: idChamp, name: champ.cle })
+    ]);
+  }
+
+  function construireChampListe(filiereId, champ) {
+    var idChamp = filiereId + '-' + champ.cle;
+    return el('div', { classe: 'champ' }, [
+      el('label', { for: idChamp, texte: champ.label }),
+      el('select', { id: idChamp, name: champ.cle }, [el('option', { value: '', texte: '—' })]
+        .concat(champ.options.map(function (o) { return el('option', { value: o, texte: o }); })))
+    ]);
+  }
+
+  /**
+   * Une valeur absente de la liste (fichier importé, libellé changé depuis) est
+   * réaffichée marquée plutôt qu'effacée : un `select` qui ne la connaît pas
+   * retomberait sur « — », et la modification suivante la perdrait en silence.
+   */
+  function poserValeurListe(n, valeur) {
+    Array.prototype.slice.call(n.querySelectorAll('option[data-hors-liste]')).forEach(function (o) {
+      n.removeChild(o);
+    });
+    if (valeur && !Array.prototype.some.call(n.options, function (o) { return o.value === valeur; })) {
+      n.appendChild(el('option', { value: valeur, 'data-hors-liste': '1', texte: valeur + ' (hors liste)' }));
+    }
+    n.value = valeur;
+  }
+
+  /** Un contrôle ne peut pas être daté dans le futur : c'est presque toujours
+   *  une faute de frappe sur l'année. Date locale, pas UTC. */
+  function poserDateMax(filiereId) {
+    var d = new Date();
+    var jour = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+    Cfg.champsDe(filiereId).forEach(function (c) {
+      var n = c.type === 'date' && document.getElementById(filiereId + '-' + c.cle);
+      if (n) n.max = jour;
+    });
+  }
+
   // ------------------------------------------------------------- favoris
 
   // Séparateur invisible : un « | » pourrait apparaître dans un libellé du
@@ -765,6 +819,8 @@
     var notes = [];
     Cfg.champsDe(f.id).forEach(function (c) {
       if (c.type === 'cascade') cascade.appendChild(construireChampCascade(f.id, c));
+      else if (c.type === 'date') notes.push(construireChampDate(f.id, c));
+      else if (c.type === 'liste') notes.push(construireChampListe(f.id, c));
       else notes.push(construireChampNote(f.id, c));
     });
 
@@ -830,6 +886,7 @@
     var modale = document.getElementById(filiereId + '-modale-mesure');
     document.getElementById(filiereId + '-titre-mesure').textContent = titre;
     rafraichirFavoris(filiereId);
+    poserDateMax(filiereId);
     modale.hidden = false;
     majVerrouDefilement();
 
@@ -1099,7 +1156,9 @@
     Cfg.champsDe(filiereId).forEach(function (c) {
       if (c.type === 'cascade') return;
       var n = document.getElementById(filiereId + '-' + c.cle);
-      if (n) n.value = valeurs[c.cle] === undefined ? '' : valeurs[c.cle];
+      var v = valeurs[c.cle] === undefined ? '' : valeurs[c.cle];
+      if (n && c.type === 'liste') poserValeurListe(n, v);
+      else if (n) n.value = v;
     });
   }
 
@@ -1107,7 +1166,9 @@
     var manquants = [];
     Cfg.champsDe(filiereId).forEach(function (c) {
       var n = document.getElementById(filiereId + '-' + c.cle);
-      var vide = c.requis && !valeurs[c.cle];
+      // `requisAvec` : champs qui ne valent qu'ensemble, comme une date de
+      // contrôle et sa conclusion.
+      var vide = (c.requis || (c.requisAvec && valeurs[c.requisAvec])) && !valeurs[c.cle];
       if (n) n.setAttribute('aria-invalid', vide ? 'true' : 'false');
       if (vide) manquants.push(c.label);
     });
@@ -1228,6 +1289,10 @@
 
     var materiel = materielDe(p);
     if (materiel) enfants.push(el('div', { classe: 'point-materiel', texte: materiel }));
+    if (p.date_dernier_controle || p.resultat_controle) {
+      enfants.push(el('div', { classe: 'point-detail', texte: 'Contrôle du ' + (dateJourFr(p.date_dernier_controle) || '?')
+        + ' : ' + (p.resultat_controle || '?') }));
+    }
     if (p.observations) enfants.push(el('div', { classe: 'point-detail', texte: '« ' + p.observations + ' »' }));
 
     if (p.latitude && p.longitude) {
