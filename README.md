@@ -299,9 +299,10 @@ catalogue ne peut pas prévoir ça.
 Chaque filière garde son fichier : `filiere` sert de garde-fou à l'import, et c'est
 ce qui permet à une filière d'avoir des champs propres, comme SPANC.
 
-**Export SIG** : un second GeoJSON, allégé pour QGIS, sans les sept colonnes GPS
-(`precision_m` à `ecart_ajustement_m`). Il ne sert pas de sauvegarde et l'import le
-refuse.
+**Export SIG** : un second GeoJSON, allégé pour QGIS. Il retire les sept colonnes
+GPS (`precision_m` à `ecart_ajustement_m`) et trois colonnes redondantes : `filiere`
+(une seule valeur par fichier), `x_l93` et `y_l93` (la géométrie porte la position,
+QGIS reprojette). Il ne sert pas de sauvegarde et l'import le refuse.
 
 ### `parametres.csv` — le catalogue de matériel
 

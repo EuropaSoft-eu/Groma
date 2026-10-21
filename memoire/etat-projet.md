@@ -88,7 +88,8 @@ navigateur headless sur quinze formats, de 280 px à 1180 px, portrait et paysag
    illisibles, sans message. Ne pas le réintroduire comme « format de confort ».
 2 bis bis. **Deux exports GeoJSON, un seul réimportable.** « Exporter » = fichier
    complet (sauvegarde, liaison, réimport). « Export SIG » = colonnes de
-   `Cfg.colonnesSig()` (sans les 7 colonnes GPS de `COLONNES_HORS_SIG`), marqué
+   `Cfg.colonnesSig()` (sans les 10 colonnes de `COLONNES_HORS_SIG` : 7 GPS +
+   `filiere`, `x_l93`, `y_l93`), marqué
    `"groma_export": "sig"`, refusé à l'import, sans effet sur l'alerte de sauvegarde.
    Ne jamais alléger le fichier complet.
 2 ter. **`Cfg.DECIMALES` est la seule table de décimales.** Deux chemins produisent

@@ -36,6 +36,11 @@ bon ou non.
   13 colonnes, 280 px sans débordement, aucune erreur JS.
 - Pas de nouvelle montée de `VERSION` : `groma-4` n'est pas encore publiée.
 
+**Puis, même jour :** export SIG allégé encore de `filiere`, `x_l93`, `y_l93`, pour
+toutes les filières (choix de Yoann). `id` conservé (clé stable de jointure),
+`operateur` conservé (seule trace de l'agent, même s'il est souvent vide faute de
+réglage dans Configuration). Export SIG : 8 colonnes, 10 pour SPANC.
+
 ---
 
 ## 21/10/2026 — Export SIG allégé

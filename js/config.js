@@ -151,8 +151,13 @@
    * précision du récepteur ne décrit alors plus la position écrite (décision de
    * Yoann, 21/10/2026). Le fichier de travail les garde toutes — c'est lui qui
    * sert à la sauvegarde et au réimport.
+   *
+   * Retirées aussi, parce que redondantes dans QGIS : `filiere` (une seule valeur
+   * par fichier) et `x_l93` / `y_l93` (la géométrie porte la position, QGIS
+   * reprojette). `id` reste : c'est la seule clé stable pour une jointure.
    */
   var COLONNES_HORS_SIG = [
+    'filiere', 'x_l93', 'y_l93',
     'precision_m', 'dispersion_m', 'methode_gps', 'nb_mesures', 'duree_gps_s',
     'position_ajustee', 'ecart_ajustement_m'
   ];
