@@ -1696,37 +1696,11 @@
           onclick: actionRetablirFonds
         })
       ]),
-      el('p', {
-        classe: 'note',
-        texte: "Seuls des services gratuits et sans clé d'accès sont fournis par défaut : "
-          + "photo aérienne et plan IGN (Géoplateforme). "
-          + "L'attribution est affichée en permanence sur la carte, comme l'exige la licence de ces fonds."
-      }),
       el('div', { classe: 'fonds', id: 'cfg-fonds' }),
       el('div', { classe: 'actions' }, [
         el('button', { type: 'button', classe: 'btn-compact', texte: '+ Ajouter un fond', onclick: actionAjouterFond }),
         el('button', { type: 'button', classe: 'btn-primaire btn-compact', texte: 'Enregistrer les fonds', onclick: enregistrerFonds })
-      ]),
-      el('p', {
-        classe: 'note note-alerte',
-        texte: "Gratuit ne veut pas dire sans conditions. Un service public peut modifier "
-          + "ses conditions, et les tuiles d'openstreetmap.org, qu'on peut ajouter ici, interdisent "
-          + "les usages applicatifs intensifs. Vérifiez celles du fond retenu avant un déploiement en service."
-      })
-    ]);
-
-    var blocRgpd = el('section', { classe: 'bloc' }, [
-      el('h2', { texte: 'Données personnelles' }),
-      el('p', {
-        classe: 'note note-alerte',
-        texte: "L'onglet SPANC relève des installations situées chez des particuliers. "
-          + "Aucun nom ni aucune adresse n'est saisi, mais une position à quelques mètres "
-          + "désigne un foyer : c'est une donnée à caractère personnel au sens du RGPD. "
-          + "Le champ Observations est le point sensible — un nom ou une habitude de vie "
-          + "notés là s'y retrouvent sans que rien ne le signale. Durée de conservation, "
-          + "base légale, information des personnes et consigne aux agents relèvent de la "
-          + "collectivité."
-      })
+      ])
     ]);
 
     var formulaire = el('form', { id: 'cfg-form' }, [
@@ -1771,8 +1745,7 @@
       blocFichier,
       construireBlocCatalogue(),
       blocDonnees,
-      blocFonds,
-      blocRgpd
+      blocFonds
     ]);
   }
 

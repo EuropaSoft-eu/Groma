@@ -706,14 +706,6 @@ button:focus-visible, a:focus-visible, summary:focus-visible {
   margin: 10px 0 0;
 }
 
-.note-alerte {
-  border: 2px solid var(--encre);
-  background: var(--alerte-fond);
-  color: var(--texte);
-  padding: 10px 12px;
-  border-radius: 10px;
-}
-
 .stats { display: flex; flex-wrap: wrap; gap: 10px; }
 
 .stat {
