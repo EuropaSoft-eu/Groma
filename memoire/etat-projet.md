@@ -3,7 +3,7 @@
 > Mémoire de travail. À relire en début de session **avant** d'ouvrir le code,
 > à mettre à jour en fin de session. Évite de relire toute l'application à chaque fois.
 
-**Dernière mise à jour :** 26/10/2026 — retrait de deux encarts de Configuration
+**Dernière mise à jour :** 26/10/2026 — retrait de trois textes de Configuration
 **Branche :** `claude/retrait-blocs-config` (`claude/export-sig` fusionnée, PR n° 21)
 **En ligne :** https://yoann-cramatte.github.io/Groma/ — dépôt public, licence AGPL-3.0
 

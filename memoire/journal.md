@@ -7,12 +7,15 @@ Une entrée par session de travail, la plus récente en haut.
 
 ---
 
-## 26/10/2026 — Retrait de deux encarts de Configuration
+## 26/10/2026 — Retrait de trois textes de Configuration
 
 **Demande :** supprimer deux blocs de l'onglet Configuration (captures iPhone).
 
 - Retirés : l'encart jaune « Gratuit ne veut pas dire sans conditions » (fin du
   bloc Fonds de carte) et tout le bloc « Données personnelles » (encart RGPD).
+- Retiré aussi, à sa demande : le texte gris d'introduction du bloc Fonds de
+  carte (« Seuls des services gratuits… »). L'attribution reste affichée sur la
+  carte, seule l'explication disparaît.
 - La classe CSS `.note-alerte`, devenue orpheline, est supprimée.
   `--alerte-fond` reste : d'autres éléments l'utilisent.
 - Le contenu survit ailleurs : `README.md` (conditions des fonds) et

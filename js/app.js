@@ -1696,12 +1696,6 @@
           onclick: actionRetablirFonds
         })
       ]),
-      el('p', {
-        classe: 'note',
-        texte: "Seuls des services gratuits et sans clé d'accès sont fournis par défaut : "
-          + "photo aérienne et plan IGN (Géoplateforme). "
-          + "L'attribution est affichée en permanence sur la carte, comme l'exige la licence de ces fonds."
-      }),
       el('div', { classe: 'fonds', id: 'cfg-fonds' }),
       el('div', { classe: 'actions' }, [
         el('button', { type: 'button', classe: 'btn-compact', texte: '+ Ajouter un fond', onclick: actionAjouterFond }),
