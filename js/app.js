@@ -520,7 +520,7 @@
     rafraichirBadgeFichier();
     if (id === 'configuration') {
       rafraichirStats();
-      rafraichirFonds();
+      rafraichirAPropos();
       Cfg.FILIERES.forEach(function (f) { rafraichirCatalogue(f.id); });
     }
     else { rafraichirListe(id); rafraichirAlerte(id); rafraichirLiaison(id); }
@@ -1414,24 +1414,6 @@
   // { filiereId, adopte, recentre, deplacee, centreImpose, gps }
   var carteEtat = null;
 
-  /**
-   * Fonds réellement utilisés : ceux saisis en configuration, sinon ceux fournis
-   * par carte.js. Un fond invalide est écarté plutôt que de casser la carte.
-   */
-  function fondsUtilisables() {
-    var perso = etat.config.fondsCarte || [];
-    if (!perso.length) return Carte.FONDS;
-
-    var sortie = {};
-    perso.forEach(function (f, i) {
-      if (Carte.validerFond(f)) return;
-      sortie[f.id || ('fond' + i)] = {
-        libelle: f.libelle, url: f.url, zoomMax: Number(f.zoomMax), credit: f.credit
-      };
-    });
-    return Object.keys(sortie).length ? sortie : Carte.FONDS;
-  }
-
   function formaterEchelle(metresParPixel) {
     var cm = metresParPixel * 100;
     return cm < 100 ? Math.round(cm) + ' cm/px' : metresParPixel.toFixed(1) + ' m/px';
@@ -1442,7 +1424,7 @@
     var message = document.getElementById(filiereId + '-carte-message');
     message.textContent = '';
 
-    var fonds = fondsUtilisables();
+    var fonds = Carte.FONDS;
     carte = Carte.creerCarte(hote, {
       urls: fonds,
       fond: fonds[etat.config.fondCarte] ? etat.config.fondCarte : Object.keys(fonds)[0],
@@ -1688,19 +1670,9 @@
       el('p', { classe: 'note', texte: "L'import ajoute les relevés au stock existant ; les identifiants déjà présents sont ignorés, et un fichier d'une autre filière est refusé." })
     ]);
 
-    var blocFonds = el('section', { classe: 'bloc' }, [
-      el('div', { classe: 'bloc-titre' }, [
-        el('h2', { texte: 'Fonds de carte' }),
-        el('button', {
-          type: 'button', classe: 'btn-compact', texte: 'Rétablir les fonds gratuits',
-          onclick: actionRetablirFonds
-        })
-      ]),
-      el('div', { classe: 'fonds', id: 'cfg-fonds' }),
-      el('div', { classe: 'actions' }, [
-        el('button', { type: 'button', classe: 'btn-compact', texte: '+ Ajouter un fond', onclick: actionAjouterFond }),
-        el('button', { type: 'button', classe: 'btn-primaire btn-compact', texte: 'Enregistrer les fonds', onclick: enregistrerFonds })
-      ])
+    var blocAPropos = el('section', { classe: 'bloc' }, [
+      el('h2', { texte: 'À propos' }),
+      el('dl', { classe: 'a-propos', id: 'cfg-a-propos' })
     ]);
 
     var formulaire = el('form', { id: 'cfg-form' }, [
@@ -1745,7 +1717,7 @@
       blocFichier,
       construireBlocCatalogue(),
       blocDonnees,
-      blocFonds
+      blocAPropos
     ]);
   }
 
@@ -2045,117 +2017,49 @@
     ]);
   }
 
-  /** Fonds affichés dans l'éditeur : ceux de la configuration, sinon les défauts. */
-  function fondsEdition() {
-    var perso = etat.config.fondsCarte || [];
-    if (perso.length) return perso.map(function (f) { return Object.assign({}, f); });
-    return Object.keys(Carte.FONDS).map(function (id) {
-      var f = Carte.FONDS[id];
-      return { id: id, libelle: f.libelle, url: f.url, zoomMax: f.zoomMax, credit: f.credit };
-    });
-  }
+  var appInfo = null;
 
-  var fondsBrouillon = null;
-
-  /** Chaque champ porte un identifiant : sans `for`, le libellé n'est lié à rien. */
-  function idFond(fond, cle) { return 'cfg-fond-' + fond.id + '-' + cle; }
-
-  function champFond(fond, cle, label, attrs) {
-    var saisie = el('input', Object.assign({
-      id: idFond(fond, cle),
-      type: 'text', value: fond[cle] === undefined ? '' : String(fond[cle]),
-      oninput: function (ev) { fond[cle] = ev.target.value; }
-    }, attrs || {}));
-    return el('div', { classe: 'champ' }, [
-      el('label', { for: idFond(fond, cle), texte: label }), saisie
-    ]);
-  }
-
-  /** `el()` pose des attributs ; un textarea veut sa valeur par propriété. */
-  function zoneUrl(fond, noeud) {
-    noeud.value = fond.url || '';
-    return noeud;
-  }
-
-  function rafraichirFonds() {
-    var hote = document.getElementById('cfg-fonds');
+  /**
+   * AppInfo.json est la fiche d'identité de l'application : la lire plutôt que
+   * recopier version et contacts dans le code, qu'on oublierait de suivre.
+   * Hors ligne, le service worker la sert depuis la coquille.
+   */
+  function rafraichirAPropos() {
+    var hote = document.getElementById('cfg-a-propos');
     if (!hote) return;
-    if (!fondsBrouillon) fondsBrouillon = fondsEdition();
+    if (appInfo) { remplirAPropos(hote, appInfo); return; }
+
+    fetch('AppInfo.json')
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (info) { appInfo = info; remplirAPropos(hote, info); })
+      .catch(function () {
+        vider(hote);
+        hote.appendChild(el('p', { classe: 'note', texte: 'Informations indisponibles.' }));
+      });
+  }
+
+  function remplirAPropos(hote, info) {
+    function lien(url, texte) {
+      return el('a', { href: url, target: '_blank', rel: 'noopener', texte: texte || url.replace(/^\w+:(\/\/)?/, '').replace(/\/$/, '') });
+    }
+    var lignes = [
+      ['Application', info.appName + (info.version ? ' — version ' + info.version : '')],
+      ['Éditeur', info.company],
+      ['Développeur', info.developer],
+      ['Contact', info.contact ? lien('mailto:' + info.contact, info.contact) : null],
+      ['Site', info.website ? lien(info.website) : null],
+      ['Code source', info.repository ? lien(info.repository) : null],
+      ['Licence', info.copyright]
+    ];
     vider(hote);
-
-    fondsBrouillon.forEach(function (fond, index) {
-      var probleme = Carte.validerFond(fond);
-      hote.appendChild(el('div', { classe: 'fond' + (probleme ? ' fond--invalide' : '') }, [
-        el('div', { classe: 'grille' }, [
-          champFond(fond, 'libelle', 'Libellé', { placeholder: 'Photo aérienne' }),
-          champFond(fond, 'zoomMax', 'Zoom maximal', { type: 'number', min: 1, max: 22, step: 1 }),
-          el('div', { classe: 'champ champ--large' }, [
-            el('label', { for: idFond(fond, 'url'), texte: 'URL de tuile (repères {z}, {x}, {y})' }),
-            // Une URL WMTS dépasse deux cents caractères : illisible dans un champ d'une ligne.
-            zoneUrl(fond, el('textarea', {
-              id: idFond(fond, 'url'),
-              rows: 2, spellcheck: 'false', classe: 'champ-url',
-              placeholder: 'https://exemple.fr/{z}/{x}/{y}.png',
-              oninput: function (ev) { fond.url = ev.target.value; }
-            }))
-          ]),
-          el('div', { classe: 'champ champ--large' }, [
-            el('label', { for: idFond(fond, 'credit'), texte: 'Attribution (obligatoire)' }),
-            el('input', {
-              id: idFond(fond, 'credit'),
-              type: 'text', value: fond.credit || '', placeholder: '© Fournisseur — licence',
-              oninput: function (ev) { fond.credit = ev.target.value; }
-            })
-          ])
-        ]),
-        probleme ? el('p', { classe: 'note fond-probleme', texte: probleme }) : null,
-        el('div', { classe: 'actions' }, [
-          el('button', {
-            type: 'button', classe: 'btn-compact btn-danger', texte: 'Retirer',
-            onclick: function () { fondsBrouillon.splice(index, 1); rafraichirFonds(); }
-          })
-        ])
-      ]));
+    lignes.forEach(function (l) {
+      if (!l[1]) return;
+      hote.appendChild(el('dt', { texte: l[0] }));
+      hote.appendChild(typeof l[1] === 'string' ? el('dd', { texte: l[1] }) : el('dd', {}, [l[1]]));
     });
-
-    if (!fondsBrouillon.length) {
-      hote.appendChild(el('p', { classe: 'vide-message', texte: 'Aucun fond : la carte utilisera les fonds gratuits par défaut.' }));
-    }
-  }
-
-  function actionAjouterFond() {
-    if (!fondsBrouillon) fondsBrouillon = fondsEdition();
-    fondsBrouillon.push({ id: 'fond' + Date.now().toString(36), libelle: '', url: '', zoomMax: 19, credit: '' });
-    rafraichirFonds();
-  }
-
-  function actionRetablirFonds() {
-    etat.config.fondsCarte = [];
-    Store.ecrireConfig(etat.config);
-    fondsBrouillon = null;
-    rafraichirFonds();
-    toast('Fonds gratuits par défaut rétablis.', 'succes');
-  }
-
-  function enregistrerFonds() {
-    if (!fondsBrouillon) return;
-
-    var invalides = fondsBrouillon
-      .map(function (f, i) { var m = Carte.validerFond(f); return m ? (f.libelle || 'Fond ' + (i + 1)) + ' : ' + m : null; })
-      .filter(Boolean);
-
-    if (invalides.length) {
-      rafraichirFonds();
-      toast(invalides[0], 'erreur');
-      return;
-    }
-
-    etat.config.fondsCarte = fondsBrouillon.map(function (f) {
-      return { id: f.id, libelle: f.libelle, url: f.url, zoomMax: Number(f.zoomMax), credit: f.credit };
-    });
-    Store.ecrireConfig(etat.config);
-    rafraichirFonds();
-    toast(etat.config.fondsCarte.length + ' fond(s) enregistré(s).', 'succes');
   }
 
   function remplirConfiguration() {

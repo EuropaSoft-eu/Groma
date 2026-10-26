@@ -41,6 +41,9 @@ var COQUILLE = [
   './js/store.js',
   './js/geo.js',
   './js/app.js',
+  // Lu par fetch() pour le bloc À propos, pas par index.html : l'audit ne le
+  // voit pas. Absent, le bloc affiche « Informations indisponibles » hors réseau.
+  './AppInfo.json',
   './icons/icone-192.png',
   './icons/icone-512.png',
   './icons/icone-maskable-512.png'

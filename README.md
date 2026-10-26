@@ -505,33 +505,20 @@ décorative reléguée dans un menu.
 
 - **OpenStreetMap n'est plus fourni par défaut** (08/10/2026). Ses tuiles sont servies
   par une fondation à but non lucratif dont la politique d'usage **proscrit les usages
-  applicatifs intensifs**, et il n'a pas de photo aérienne. On peut l'ajouter à la main
-  dans Configuration en dépannage, pas comme fond de production.
+  applicatifs intensifs**, et il n'a pas de photo aérienne.
 - Aucun quota n'est annoncé pour la Géoplateforme, mais « sans limite » n'est écrit
   nulle part : c'est un service public, à usage raisonnable.
 - Un service public peut modifier ses conditions. **Les URL n'ont pas pu être
   appelées réellement depuis l'environnement de développement** (sortie réseau
   fermée) : à confirmer avant tout déploiement en service.
 
-#### Changer de fond sans toucher au code
+#### Changer de fond
 
-Configuration → **Fonds de carte** permet d'ajouter, modifier ou retirer un fond :
-libellé, URL de tuile, zoom maximal et attribution. La liste remplace alors les fonds
-par défaut ; **Rétablir les fonds gratuits** revient à l'état d'origine.
-
-L'URL accepte n'importe quel service **XYZ ou WMTS** et doit contenir les repères
-`{z}`, `{x}` et `{y}` :
-
-```
-https://exemple.fr/tuiles/{z}/{x}/{y}.png
-```
-
-Quatre contrôles avant enregistrement : HTTPS obligatoire, repères présents, zoom
-entre 1 et 22, **attribution non vide**. Un fond sans attribution est refusé — la
-licence l'exige, l'application ne laisse pas l'oublier.
-
-Cela permet notamment de basculer sur un serveur de tuiles interne à votre
-organisation, ou sur un autre flux public, si la Géoplateforme change de conditions.
+L'éditeur de fonds de Configuration a été retiré le 26/10/2026. Les fonds se
+changent désormais dans `js/carte.js` (objet `FONDS`) : libellé, URL de tuile
+**XYZ ou WMTS** avec les repères `{z}`, `{x}`, `{y}`, zoom maximal et
+**attribution obligatoire**. `Carte.validerFond()` contrôle toujours HTTPS,
+repères, zoom entre 1 et 22 et attribution non vide.
 
 ### Dépendance réseau
 
@@ -539,9 +526,8 @@ C'est la **seule** partie de l'application qui sort sur le réseau. Sans connexi
 fenêtre le dit et reste utilisable : repère, coordonnées et validation fonctionnent,
 seul le fond manque. Le reste de l'application n'émet aucune requête.
 
-> Les fonds par défaut sont définis dans `js/carte.js` (objet `FONDS`). Les
-> remplacer durablement pour un poste se fait depuis Configuration, sans éditer
-> le code.
+> Les fonds sont définis dans `js/carte.js` (objet `FONDS`) et ne se règlent
+> plus depuis l'application.
 
 ---
 

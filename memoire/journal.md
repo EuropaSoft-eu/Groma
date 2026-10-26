@@ -7,6 +7,33 @@ Une entrée par session de travail, la plus récente en haut.
 
 ---
 
+## 26/10/2026 (suite) — Éditeur de fonds retiré, bloc À propos
+
+**Demande :** supprimer le bloc Fonds de carte ; créer un bloc pour les infos de
+l'application et du développeur.
+
+- Fonds : bloc, éditeur (`fondsEdition`, `rafraichirFonds`, `enregistrerFonds`…),
+  styles `.fond*` / `.champ-url` et `fondsUtilisables()` supprimés. La carte prend
+  toujours `Carte.FONDS`. `fondsCarte` retiré de `CONFIG_DEFAUT` : un poste qui
+  avait des fonds perso revient aux fonds IGN (vérifié). `validerFond()` reste
+  dans `carte.js`. README : section « Changer de fond » réécrite.
+- À propos : lit `AppInfo.json` par `fetch` (une seule source, pas de recopie),
+  ajouté à `COQUILLE` à la main — l'audit ne voit que `index.html`. Affiche
+  application + version, éditeur, développeur, contact, site, code source,
+  licence. Échec de lecture → « Informations indisponibles ». Liens en
+  `--accent-texte`, cible 36 px ; une colonne sous 360 px.
+- Vérifié : audits sans défaut ; Playwright jetable — contenu à 280 et 1180 px,
+  **hors ligne** (servi par le service worker), thème sombre, fond perso ignoré,
+  aucune erreur JavaScript.
+- Piège rencontré deux fois aujourd'hui : `var formulaire = el('form'` existe
+  aussi dans la fenêtre de mesure. Un remplacement « première occurrence »
+  tombe au mauvais endroit.
+- **Version affichée : 1.3**, celle d'`AppInfo.json`, alors que plusieurs
+  évolutions ont suivi (export SIG, contrôle SPANC, ces retraits). Numéroter
+  est une décision de Yoann.
+
+---
+
 ## 26/10/2026 (suite) — Nouvelle adresse après transfert du dépôt
 
 **Constat en vérifiant la PR n° 22 :** `yoann-cramatte.github.io/Groma/` répond

@@ -1313,28 +1313,28 @@ body[data-modale] { overflow: hidden; }
   color: var(--texte-faible);
 }
 
-/* ---------- Fonds de carte (configuration) ---------- */
+/* ---------- À propos (configuration) ---------- */
 
-.fonds { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
-
-.fond {
-  border: 2px solid var(--bord);
-  border-radius: 14px;
-  padding: 11px 12px;
-  background: var(--fond);
+.a-propos {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 14px;
+  margin: 12px 0 0;
+  font-size: 0.88rem;
 }
 
-.fond--invalide { border-color: var(--danger); }
+.a-propos dt { color: var(--texte-faible); }
+.a-propos dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 
-.fond-probleme { color: var(--danger); margin-top: 8px; }
+/* Un lien sur une ligne de texte fait moins de 36 px de haut : trop petit au
+   doigt, et ganté encore moins. */
+.a-propos a { display: inline-flex; align-items: center; min-height: 36px; color: var(--accent-texte); font-weight: 600; }
+.a-propos dt { display: flex; align-items: center; min-height: 36px; }
+.a-propos dd { display: flex; align-items: center; min-height: 36px; }
 
-.fond .actions { margin-top: 10px; }
-
-.champ-url {
-  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
-  font-size: 0.78rem;
-  min-height: 62px;
-  word-break: break-all;
+@media (max-width: 360px) {
+  .a-propos { grid-template-columns: 1fr; gap: 0; }
+  .a-propos dd { margin-bottom: 8px; }
 }
 
 /* ---------- Toast ---------- */

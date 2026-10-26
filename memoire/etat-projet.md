@@ -3,7 +3,7 @@
 > Mémoire de travail. À relire en début de session **avant** d'ouvrir le code,
 > à mettre à jour en fin de session. Évite de relire toute l'application à chaque fois.
 
-**Dernière mise à jour :** 26/10/2026 — nouvelle adresse après transfert du dépôt
+**Dernière mise à jour :** 26/10/2026 — nouvelle adresse, éditeur de fonds retiré, bloc À propos
 **Branche :** `claude/nouvelle-adresse` (`claude/retrait-blocs-config` fusionnée, PR n° 22)
 **En ligne :** https://europasoft-eu.github.io/Groma/ — dépôt public, licence AGPL-3.0
 
@@ -64,7 +64,7 @@ navigateur headless sur quinze formats, de 280 px à 1180 px, portrait et paysag
 | `js/carte.js` | Visualiseur de tuiles WMTS/XYZ, fonds gratuits, validation | oui, projection vérifiée |
 | `js/app.js` | Construction du DOM, formulaires, liste, configuration | oui |
 | `serveur.py` | Serveur local — indispensable, le GPS refuse `file://` | oui |
-| `AppInfo.json` | Identité de l'app (nom, version, éditeur, licence) et changelog — convention EuropaSoft, **pas encore lu par l'application** | oui |
+| `AppInfo.json` | Identité de l'app (nom, version, éditeur, licence) et changelog — convention EuropaSoft, **lu par le bloc À propos** (Configuration) : inscrit dans `COQUILLE` | oui |
 | `docs/RGPD.md` | Point de vigilance sur les données SPANC | oui |
 | `tests/audit-responsive.mjs` | Affichage sur 15 formats (tablettes + téléphones) + contrôle de la cascade | oui |
 | `tests/audit-pwa.mjs` | Manifeste, icônes, service worker, cohérence `index.html` ↔ `COQUILLE`, démarrage hors réseau | oui |
@@ -154,8 +154,9 @@ navigateur headless sur quinze formats, de 280 px à 1180 px, portrait et paysag
 13. **La carte est la seule dépendance réseau.** Tout le reste fonctionne hors
    ligne. Une panne de tuiles doit rester un message, jamais un blocage.
 14. **Uniquement des fonds gratuits et sans clé.** Aucun service payant, aucun
-   quota, aucun compte. Tout fond ajouté passe quatre contrôles, dont
-   **attribution non vide** : c'est une obligation de licence.
+   quota, aucun compte. Les fonds vivent dans `carte.js` (`FONDS`) ; tout fond
+   ajouté là doit passer `validerFond()`, dont **attribution non vide** : c'est
+   une obligation de licence.
 15. **L'attribution s'affiche en permanence sur la carte**, jamais dans un menu
    ni derrière un geste.
 16. **Tout fichier chargé par `index.html` s'inscrit dans `COQUILLE`**
@@ -247,9 +248,12 @@ navigateur headless sur quinze formats, de 280 px à 1180 px, portrait et paysag
   ou le tampon, et c'est le service public destiné à cet usage. OSM dépanne si la
   Géoplateforme tombe, mais sa politique d'usage proscrit les usages applicatifs
   intensifs : ce n'est pas un fond de production.
-- **Fonds éditables depuis Configuration** plutôt que figés dans le code : un
-  service public peut changer ses conditions. Sans cette porte de sortie, il
-  faudrait modifier `carte.js` sur chaque poste.
+- ~~Fonds éditables depuis Configuration~~ — **éditeur retiré le 26/10/2026**
+  à la demande de Yoann. La raison d'origine (« sinon modifier `carte.js` sur
+  chaque poste ») est tombée avec la PWA : une livraison sur `main` met à jour
+  tous les postes. Les fonds se changent dans `carte.js`. `fondsCarte` est sorti
+  de `CONFIG_DEFAUT`, donc `lireConfig()` ignore les fonds personnalisés déjà
+  enregistrés sur un poste.
 - **Repère fixe, carte mobile** : sur un téléphone, déplacer un marqueur au doigt
   le cache sous le doigt. Déplacer le fond sous une croix fixe, non.
 - **Lambert 93 calculé côté client** plutôt qu'importé : la conversion est courte et
