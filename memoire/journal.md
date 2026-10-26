@@ -7,6 +7,74 @@ Une entrée par session de travail, la plus récente en haut.
 
 ---
 
+## 21/10/2026 (suite) — Date et résultat du dernier contrôle SPANC
+
+**Demande :** voir dans QGIS la date du dernier contrôle, puis si le contrôle est
+bon ou non.
+
+- Yoann a choisi le **contrôle réglementaire** (saisi à la main), plutôt que le
+  dernier passage terrain (produit par l'application). C'est une **exception à
+  l'invariant 1** (cascade + note), décidée en connaissance de cause, **SPANC seul**.
+- Deux champs déclarés dans `FILIERES[spanc].champs` : `date_dernier_controle`
+  (`input type=date`, `max` = aujourd'hui, posé à l'ouverture de la fenêtre) et
+  `resultat_controle` (liste). `champsDe()` et `colonnesFiliere()` les insèrent
+  entre la cascade et la note : formulaire, fichier, filtre et export SIG suivent.
+- Résultat : les quatre classes de l'arrêté du 27 avril 2012 (conforme ; non
+  conforme, travaux sous 4 ans ; non conforme, travaux en cas de vente ; absence
+  d'installation). **Liste citée de mémoire**, à confronter au règlement de service
+  du SPANC de la CC Sundgau. « Conforme / non conforme » écarté : il confond deux
+  niveaux d'obligation.
+- `requisAvec` : la date et le résultat se remplissent ensemble ou pas du tout.
+- Valeur hors liste (fichier importé, libellé changé) : réaffichée
+  « (hors liste) » et conservée, sur le modèle de la cascade.
+- « Dupliquer » ne reprend pas le contrôle : il vaut pour une installation précise.
+- Liste des relevés : ligne « Contrôle du JJ/MM/AAAA : résultat ».
+- `docs/RGPD.md` : un résultat « non conforme » rattaché à un foyer aggrave l'enjeu.
+- Vérifié : audits sans défaut ; test Playwright jetable — champ absent d'EAU,
+  `max` à la date du jour, résultat sans date refusé avec message, enregistrement,
+  affichage en liste, valeur hors liste conservée à la modification, export SIG à
+  13 colonnes, 280 px sans débordement, aucune erreur JS.
+- Pas de nouvelle montée de `VERSION` : `groma-4` n'est pas encore publiée.
+
+**Puis, même jour :** export SIG allégé encore de `filiere`, `x_l93`, `y_l93`, pour
+toutes les filières (choix de Yoann). `id` conservé (clé stable de jointure),
+`operateur` conservé (seule trace de l'agent, même s'il est souvent vide faute de
+réglage dans Configuration). Export SIG : 8 colonnes, 10 pour SPANC.
+
+---
+
+## 21/10/2026 — Export SIG allégé
+
+**Demande :** dans QGIS, trop de colonnes. Les colonnes GPS (`precision_m`,
+`dispersion_m`, `methode_gps`, `nb_mesures`, `duree_gps_s`, `position_ajustee`,
+`ecart_ajustement_m`) n'ont pas d'intérêt pour Yoann : le point est souvent recalé
+sur la photo aérienne, la précision du récepteur ne décrit alors plus la position.
+
+- **Pas de retrait dans le fichier complet** : il sert de sauvegarde et de réimport
+  (`id` pour la fusion, `filiere` comme garde-fou, `reference` pour les compteurs,
+  invariant 12 sur la précision).
+- Nouveau bouton **« Export SIG »** par filière (Configuration › Fichiers) :
+  `spanc-sig-AAAA-MM-JJ.geojson`, colonnes = `Cfg.colonnesSig()` = colonnes de la
+  filière moins `COLONNES_HORS_SIG`.
+- Le fichier porte un membre étranger `"groma_export": "sig"` (RFC 7946 § 6.1).
+  `fusionnerReleves` et `reprendreFichierDuDossier` le refusent : réimporté sur une
+  autre tablette, il créerait des relevés amputés.
+- L'export SIG **n'appelle pas `marquerSauvegarde`** : il ne peut pas restaurer.
+- J'ai prévenu Yoann (21/10/2026) : un point **non recalé** n'a plus d'indicateur de
+  fiabilité dans QGIS. Il a maintenu la décision.
+- `VERSION` → `groma-4` : `app.js` appelle des fonctions nouvelles de `config.js` et
+  `geojson.js`, les trois doivent arriver ensemble.
+- Vérifié : audits responsive et PWA sans défaut ; test Playwright jetable —
+  11 colonnes exportées, géométrie intacte, alerte de sauvegarde inchangée, réimport
+  du fichier SIG refusé avec message, aucune erreur JS.
+
+**Défaut existant relevé, non corrigé :** `actionOuvrirFichier` (« Lier un
+existant ») appelle `synchroniserFichier` même quand `fusionnerReleves` a refusé le
+fichier (illisible, autre filière, export SIG). Le fichier choisi est alors écrasé
+sans avoir été repris, contrairement à l'esprit de l'invariant 27.
+
+---
+
 ## 08/10/2026 (fin de soirée) — Nouveau logo
 
 **Demande :** un logo plus sympa. L'écran d'accueil de l'iPhone affichait un « G »

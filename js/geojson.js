@@ -30,6 +30,8 @@
   // modifier d'un côté sans l'autre.
   var DANS_GEOMETRIE = ['latitude', 'longitude', 'altitude_m'];
 
+  var MARQUE_SIG = 'groma_export';
+
   function estNombre(valeur) {
     return valeur !== '' && valeur !== null && valeur !== undefined && !isNaN(Number(valeur));
   }
@@ -66,8 +68,8 @@
    * écarté : la norme l'autorise, les SIG l'acceptent, et une ligne perdue en
    * silence à l'export est pire qu'une ligne sans position.
    */
-  function serialiser(colonnes, points) {
-    return JSON.stringify({
+  function serialiser(colonnes, points, exportSig) {
+    var doc = {
       type: 'FeatureCollection',
       features: (points || []).map(function (p) {
         return {
@@ -76,7 +78,18 @@
           properties: proprietes(p, colonnes)
         };
       })
-    }, null, 2);
+    };
+    // Membre étranger (RFC 7946 § 6.1) : les SIG l'ignorent, l'import le lit.
+    if (exportSig) doc[MARQUE_SIG] = 'sig';
+    return JSON.stringify(doc, null, 2);
+  }
+
+  /**
+   * Un export SIG n'a pas les colonnes GPS. Réimporté sur une autre tablette,
+   * il y créerait des relevés amputés, sans que rien ne le signale.
+   */
+  function estExportSig(texte) {
+    try { return JSON.parse(texte)[MARQUE_SIG] === 'sig'; } catch (e) { return false; }
   }
 
   /**
@@ -118,6 +131,7 @@
   global.GromaGeojson = {
     serialiser: serialiser,
     analyser: analyser,
+    estExportSig: estExportSig,
     NOMBRES: NOMBRES
   };
 })(window);

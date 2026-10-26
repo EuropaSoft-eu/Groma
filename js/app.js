@@ -81,6 +81,13 @@
     });
   }
 
+  /** `2023-05-14` → `14/05/2023`, sans passer par `Date` : un jour civil
+   *  converti en instant UTC reculerait d'un jour à l'ouest de Greenwich. */
+  function dateJourFr(jour) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(jour || '');
+    return m ? m[3] + '/' + m[2] + '/' + m[1] : jour;
+  }
+
   function idUnique() {
     return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
   }
@@ -284,7 +291,7 @@
     if (cle === 'parametres') return chargerCatalogueDepuisTexte(texte);
     var lignes = Geojson.analyser(texte);
     var etrangeres = lignes ? lignes.filter(function (l) { return l.filiere && l.filiere !== cle; }).length : 0;
-    if (!lignes || etrangeres) return false;
+    if (!lignes || etrangeres || Geojson.estExportSig(texte)) return false;
     fusionnerReleves(texte, cle);
     return true;
   }
@@ -409,6 +416,17 @@
     // lié — laisserait un bandeau permanent sous Firefox et Safari, où l'export
     // manuel est la seule voie. Un avertissement permanent n'avertit plus.
     marquerSauvegarde(filiereId);
+  }
+
+  /**
+   * Ne lève pas l'alerte de sauvegarde : ce fichier ne peut pas restaurer les
+   * relevés, il lui manque les colonnes GPS.
+   */
+  function telechargerSig(filiereId) {
+    var fichier = Cfg.filiere(filiereId).fichier.replace(/\.geojson$/, '-sig.geojson');
+    telechargerTexte(fichier,
+      Geojson.serialiser(Cfg.colonnesSig(filiereId), pointsDe(filiereId), true),
+      'application/geo+json');
   }
 
   /** Téléchargements échelonnés : Chrome bloque les déclenchements simultanés. */
@@ -593,6 +611,53 @@
     ]);
   }
 
+  /**
+   * `max` posé à l'ouverture de la fenêtre, pas ici : l'application reste
+   * ouverte des jours sur une tablette, une date figée au démarrage vieillirait.
+   */
+  function construireChampDate(filiereId, champ) {
+    var idChamp = filiereId + '-' + champ.cle;
+    return el('div', { classe: 'champ' }, [
+      el('label', { for: idChamp, texte: champ.label }),
+      el('input', { type: 'date', id: idChamp, name: champ.cle })
+    ]);
+  }
+
+  function construireChampListe(filiereId, champ) {
+    var idChamp = filiereId + '-' + champ.cle;
+    return el('div', { classe: 'champ' }, [
+      el('label', { for: idChamp, texte: champ.label }),
+      el('select', { id: idChamp, name: champ.cle }, [el('option', { value: '', texte: '—' })]
+        .concat(champ.options.map(function (o) { return el('option', { value: o, texte: o }); })))
+    ]);
+  }
+
+  /**
+   * Une valeur absente de la liste (fichier importé, libellé changé depuis) est
+   * réaffichée marquée plutôt qu'effacée : un `select` qui ne la connaît pas
+   * retomberait sur « — », et la modification suivante la perdrait en silence.
+   */
+  function poserValeurListe(n, valeur) {
+    Array.prototype.slice.call(n.querySelectorAll('option[data-hors-liste]')).forEach(function (o) {
+      n.removeChild(o);
+    });
+    if (valeur && !Array.prototype.some.call(n.options, function (o) { return o.value === valeur; })) {
+      n.appendChild(el('option', { value: valeur, 'data-hors-liste': '1', texte: valeur + ' (hors liste)' }));
+    }
+    n.value = valeur;
+  }
+
+  /** Un contrôle ne peut pas être daté dans le futur : c'est presque toujours
+   *  une faute de frappe sur l'année. Date locale, pas UTC. */
+  function poserDateMax(filiereId) {
+    var d = new Date();
+    var jour = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+    Cfg.champsDe(filiereId).forEach(function (c) {
+      var n = c.type === 'date' && document.getElementById(filiereId + '-' + c.cle);
+      if (n) n.max = jour;
+    });
+  }
+
   // ------------------------------------------------------------- favoris
 
   // Séparateur invisible : un « | » pourrait apparaître dans un libellé du
@@ -754,6 +819,8 @@
     var notes = [];
     Cfg.champsDe(f.id).forEach(function (c) {
       if (c.type === 'cascade') cascade.appendChild(construireChampCascade(f.id, c));
+      else if (c.type === 'date') notes.push(construireChampDate(f.id, c));
+      else if (c.type === 'liste') notes.push(construireChampListe(f.id, c));
       else notes.push(construireChampNote(f.id, c));
     });
 
@@ -819,6 +886,7 @@
     var modale = document.getElementById(filiereId + '-modale-mesure');
     document.getElementById(filiereId + '-titre-mesure').textContent = titre;
     rafraichirFavoris(filiereId);
+    poserDateMax(filiereId);
     modale.hidden = false;
     majVerrouDefilement();
 
@@ -1088,7 +1156,9 @@
     Cfg.champsDe(filiereId).forEach(function (c) {
       if (c.type === 'cascade') return;
       var n = document.getElementById(filiereId + '-' + c.cle);
-      if (n) n.value = valeurs[c.cle] === undefined ? '' : valeurs[c.cle];
+      var v = valeurs[c.cle] === undefined ? '' : valeurs[c.cle];
+      if (n && c.type === 'liste') poserValeurListe(n, v);
+      else if (n) n.value = v;
     });
   }
 
@@ -1096,7 +1166,9 @@
     var manquants = [];
     Cfg.champsDe(filiereId).forEach(function (c) {
       var n = document.getElementById(filiereId + '-' + c.cle);
-      var vide = c.requis && !valeurs[c.cle];
+      // `requisAvec` : champs qui ne valent qu'ensemble, comme une date de
+      // contrôle et sa conclusion.
+      var vide = (c.requis || (c.requisAvec && valeurs[c.requisAvec])) && !valeurs[c.cle];
       if (n) n.setAttribute('aria-invalid', vide ? 'true' : 'false');
       if (vide) manquants.push(c.label);
     });
@@ -1217,6 +1289,10 @@
 
     var materiel = materielDe(p);
     if (materiel) enfants.push(el('div', { classe: 'point-materiel', texte: materiel }));
+    if (p.date_dernier_controle || p.resultat_controle) {
+      enfants.push(el('div', { classe: 'point-detail', texte: 'Contrôle du ' + (dateJourFr(p.date_dernier_controle) || '?')
+        + ' : ' + (p.resultat_controle || '?') }));
+    }
     if (p.observations) enfants.push(el('div', { classe: 'point-detail', texte: '« ' + p.observations + ' »' }));
 
     if (p.latitude && p.longitude) {
@@ -1594,7 +1670,7 @@
         el('p', { classe: 'note', id: 'cfg-dossier' }),
         el('button', { type: 'button', classe: 'btn-primaire btn-compact', 'data-fsa': '1', texte: 'Choisir le dossier', onclick: actionChoisirDossier })
       ]) : null,
-      el('p', { classe: 'note', texte: 'Un GeoJSON par filière, prêt à ouvrir dans QGIS. Chaque fichier ne contient que les colonnes de sa filière. Le catalogue a le sien, plus bas.' }),
+      el('p', { classe: 'note', texte: 'Un GeoJSON par filière. « Exporter » sort le fichier complet, celui qui sert de sauvegarde et se réimporte. « Export SIG » sort une version allégée pour QGIS, sans les colonnes GPS. Le catalogue a son propre fichier, plus bas.' }),
       el('div', { classe: 'fichiers' }, Cfg.FILIERES.map(construireCarteFichier)),
       el('p', { classe: 'note', id: 'cfg-note-fsa' }),
       el('input', {
@@ -1725,6 +1801,11 @@
           type: 'button', classe: 'btn-compact', texte: 'Exporter',
           title: 'GeoJSON — s\'ouvre dans QGIS ou ArcGIS sans réglage',
           onclick: function () { telechargerReleves(f.id); }
+        }),
+        el('button', {
+          type: 'button', classe: 'btn-compact', texte: 'Export SIG',
+          title: 'GeoJSON allégé pour QGIS, sans les colonnes GPS. Ne sert pas de sauvegarde.',
+          onclick: function () { telechargerSig(f.id); }
         }),
         el('button', {
           type: 'button', classe: 'btn-compact', texte: 'Importer',
@@ -2248,6 +2329,10 @@
     var lignes = Geojson.analyser(texte);
     if (!lignes) {
       toast('Fichier refusé : ce n\'est pas un GeoJSON lisible.', 'erreur');
+      return -1;
+    }
+    if (Geojson.estExportSig(texte)) {
+      toast('Fichier refusé : c\'est un export SIG, sans les colonnes GPS. Importez le fichier « Exporter ».', 'erreur');
       return -1;
     }
     var connus = {};

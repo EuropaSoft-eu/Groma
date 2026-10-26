@@ -6,6 +6,8 @@ L'onglet **SPANC** et son fichier `spanc.geojson` enregistrent, pour chaque inst
 
 - `latitude` / `longitude` / `x_l93` / `y_l93` — localisation de l'installation
 - `type_materiel` / `modele` / `detail` — nature du dispositif en place
+- `date_dernier_controle` / `resultat_controle` — date et conclusion du dernier
+  contrôle réglementaire
 - `observations` — note libre de l'agent
 - `date_saisie` / `operateur` — qui est passé, et quand
 
@@ -51,6 +53,12 @@ Ces points relèvent de la collectivité, pas de l'outil :
   serait alors un nom et une habitude de vie dans un fichier qui n'en prévoit pas.
   L'application ne peut pas le contrôler : ça relève de la consigne donnée aux
   agents, à porter dans la procédure de contrôle.
+
+- **Le résultat du contrôle aggrave l'enjeu.** Une position associée à « non
+  conforme, travaux sous 4 ans » dit d'un foyer identifiable qu'il a une obligation
+  de travaux. C'est une information que le SPANC détient déjà dans ses rapports,
+  mais `spanc.geojson` la rend diffusable en un fichier. L'export SIG la contient
+  aussi : il est à traiter comme le fichier complet.
 
 > Rédigé comme point de vigilance technique. Ce document n'est pas un avis juridique :
 > le DPO de la collectivité tranche.

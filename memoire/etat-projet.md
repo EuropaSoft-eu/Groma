@@ -3,8 +3,8 @@
 > Mémoire de travail. À relire en début de session **avant** d'ouvrir le code,
 > à mettre à jour en fin de session. Évite de relire toute l'application à chaque fois.
 
-**Dernière mise à jour :** 30/09/2026 — **incrément 1, étape 1/3** (socle = incrément 0)
-**Branche :** `claude/geoloc-web-app-duccxo`, fusionnée dans `main`
+**Dernière mise à jour :** 21/10/2026 — export SIG allégé (incrément 1, étape 1/3 ; socle = incrément 0)
+**Branche :** `claude/export-sig` (PR en attente de fusion)
 **En ligne :** https://yoann-cramatte.github.io/Groma/ — dépôt public, licence AGPL-3.0
 
 > **Le dépôt est désormais Groma seul.** Le projet Synapse qu'il portait (shell
@@ -69,9 +69,15 @@ navigateur headless sur quinze formats, de 280 px à 1180 px, portrait et paysag
    par l'application (`COLONNES_TECHNIQUES`), soit un niveau de cascade — le
    formulaire ne se regarnit pas champ par champ. La note est l'exception assumée :
    elle porte ce qu'aucune nomenclature ne prévoit.
+   **Seconde exception, SPANC seul (21/10/2026)** : `date_dernier_controle` et
+   `resultat_controle`, déclarés dans `champs` de la filière (config.js). Ils
+   viennent d'un dossier, pas du terrain, et l'application ne peut pas les
+   produire. Ils vont ensemble (`requisAvec`). Une valeur de résultat inconnue
+   de la liste est réaffichée « (hors liste) », jamais effacée. Toute nouvelle
+   demande de champ se pèse contre ce précédent : ce n'en est pas une porte ouverte.
 2. **Un GeoJSON par filière** (`eau.geojson`, `assainissement.geojson`,
-   `spanc.geojson`, `voirie.geojson`). Toutes ont aujourd'hui les mêmes vingt et un
-   champs, mais gardent chacune leur fichier : le champ `filiere` est le garde-fou à
+   `spanc.geojson`, `voirie.geojson`). SPANC a deux champs de plus
+   que les autres (contrôle). Chacune garde son fichier : le champ `filiere` est le garde-fou à
    l'import, et rien ne les oblige à rester alignées. Le stockage interne, lui, reste un stock
    unique.
    **`parametres.csv` est le quatrième fichier** : il porte le catalogue, pas des
@@ -80,6 +86,12 @@ navigateur headless sur quinze formats, de 280 px à 1180 px, portrait et paysag
    Le CSV a été retiré des relevés le 30/09/2026 : un `eau.csv` réenregistré par un
    tableur français transformait `47.5` en `47,5` et rendait les coordonnées
    illisibles, sans message. Ne pas le réintroduire comme « format de confort ».
+2 bis bis. **Deux exports GeoJSON, un seul réimportable.** « Exporter » = fichier
+   complet (sauvegarde, liaison, réimport). « Export SIG » = colonnes de
+   `Cfg.colonnesSig()` (sans les 10 colonnes de `COLONNES_HORS_SIG` : 7 GPS +
+   `filiere`, `x_l93`, `y_l93`), marqué
+   `"groma_export": "sig"`, refusé à l'import, sans effet sur l'alerte de sauvegarde.
+   Ne jamais alléger le fichier complet.
 2 ter. **`Cfg.DECIMALES` est la seule table de décimales.** Deux chemins produisent
    des relevés — la saisie et l'import d'un fichier — et deux écritures d'une même
    valeur (`47.5175` d'un côté, `47.5175000` de l'autre) rendent deux exports
@@ -309,6 +321,11 @@ navigateur headless sur quinze formats, de 280 px à 1180 px, portrait et paysag
       **MOBILIER** proposé, **pas encore confirmé par Yoann**. Attention :
       `.onglets { grid-template-columns: repeat(4, 1fr) }` est codé en dur dans
       `css/style.css` et doit devenir dynamique pour un cinquième onglet.
+- [x] ~~Export SIG allégé~~ — 21/10/2026, sans les colonnes GPS.
+- [ ] **Corriger « Lier un existant »** : `actionOuvrirFichier` écrase le fichier
+      choisi même quand `fusionnerReleves` l'a refusé (illisible, autre filière,
+      export SIG). Doit délier et laisser le fichier intact, comme
+      `actionChoisirDossier`.
 - [ ] Dédoublonnage à l'import sur `reference` en plus de `id` (saisie multi-appareils).
 - [ ] Export consolidé des trois filières, si le besoin d'une vue unique revient.
 - [ ] Mise en cache des tuiles pour l'ajustement hors réseau.

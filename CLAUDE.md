@@ -88,7 +88,8 @@ Ils sont détaillés dans `memoire/etat-projet.md`. Les quatre qui coûtent le p
    `precision_m` : il alimente `ecart_ajustement_m`.
 3. **La saisie se limite à la cascade et à la note.** Trois listes liées plus
    `observations`. Toute autre donnée est produite par l'application. Le formulaire
-   ne se regarnit pas champ par champ.
+   ne se regarnit pas champ par champ. Seule exception, décidée par Yoann : la date
+   et le résultat du dernier contrôle, sur SPANC uniquement.
 4. **Le catalogue ne vit pas dans le code.** Ajouter du matériel se fait depuis
    Configuration ou dans `parametres.csv`, jamais dans `config.js`.
 5. **Tout fichier ajouté à `index.html` s'inscrit dans `COQUILLE`**
