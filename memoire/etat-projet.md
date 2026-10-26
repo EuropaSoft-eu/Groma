@@ -3,9 +3,16 @@
 > Mémoire de travail. À relire en début de session **avant** d'ouvrir le code,
 > à mettre à jour en fin de session. Évite de relire toute l'application à chaque fois.
 
-**Dernière mise à jour :** 26/10/2026 — retrait de trois textes de Configuration
-**Branche :** `claude/retrait-blocs-config` (`claude/export-sig` fusionnée, PR n° 21)
-**En ligne :** https://yoann-cramatte.github.io/Groma/ — dépôt public, licence AGPL-3.0
+**Dernière mise à jour :** 26/10/2026 — nouvelle adresse après transfert du dépôt
+**Branche :** `claude/nouvelle-adresse` (`claude/retrait-blocs-config` fusionnée, PR n° 22)
+**En ligne :** https://europasoft-eu.github.io/Groma/ — dépôt public, licence AGPL-3.0
+
+> **Dépôt transféré chez `EuropaSoft-eu/Groma`.** L'ancienne adresse
+> `yoann-cramatte.github.io/Groma/` répond 404 (constaté le 26/10/2026) ; le
+> `G` majuscule de la nouvelle est obligatoire. Le `localStorage` étant lié à
+> l'origine, une installation faite sur l'ancienne adresse garde ses relevés
+> mais ne se met plus à jour : exporter chaque filière en GeoJSON, puis
+> réimporter sur la nouvelle adresse.
 
 > **Le dépôt est désormais Groma seul.** Le projet Synapse qu'il portait (shell
 > desktop AI-native, resté au stade du spike) a été supprimé le 24/09/2026 : il est
