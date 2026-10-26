@@ -7,6 +7,22 @@ Une entrée par session de travail, la plus récente en haut.
 
 ---
 
+## 26/10/2026 — Retrait de deux encarts de Configuration
+
+**Demande :** supprimer deux blocs de l'onglet Configuration (captures iPhone).
+
+- Retirés : l'encart jaune « Gratuit ne veut pas dire sans conditions » (fin du
+  bloc Fonds de carte) et tout le bloc « Données personnelles » (encart RGPD).
+- La classe CSS `.note-alerte`, devenue orpheline, est supprimée.
+  `--alerte-fond` reste : d'autres éléments l'utilisent.
+- Le contenu survit ailleurs : `README.md` (conditions des fonds) et
+  `docs/RGPD.md`. L'application ne rappelle plus la vigilance RGPD à l'écran :
+  la consigne aux agents (reste à faire) devient le seul relais.
+- Vérifié : `audit-responsive` et `audit-pwa` sans défaut ; script Playwright
+  jetable confirmant l'absence des deux textes, sans erreur JavaScript.
+
+---
+
 ## 21/10/2026 (suite) — Date et résultat du dernier contrôle SPANC
 
 **Demande :** voir dans QGIS la date du dernier contrôle, puis si le contrôle est

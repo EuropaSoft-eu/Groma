@@ -3,8 +3,8 @@
 > Mémoire de travail. À relire en début de session **avant** d'ouvrir le code,
 > à mettre à jour en fin de session. Évite de relire toute l'application à chaque fois.
 
-**Dernière mise à jour :** 21/10/2026 — export SIG allégé (incrément 1, étape 1/3 ; socle = incrément 0)
-**Branche :** `claude/export-sig` (PR en attente de fusion)
+**Dernière mise à jour :** 26/10/2026 — retrait de deux encarts de Configuration
+**Branche :** `claude/retrait-blocs-config` (`claude/export-sig` fusionnée, PR n° 21)
 **En ligne :** https://yoann-cramatte.github.io/Groma/ — dépôt public, licence AGPL-3.0
 
 > **Le dépôt est désormais Groma seul.** Le projet Synapse qu'il portait (shell
@@ -359,6 +359,9 @@ navigateur headless sur quinze formats, de 280 px à 1180 px, portrait et paysag
   `observations` rouvre la brèche** : rien n'empêche d'y écrire un nom ou une
   habitude de vie, et l'application ne peut pas le contrôler — c'est une consigne
   d'usage, pas une fonctionnalité. Cf. `docs/RGPD.md`.
+  **L'encart « Données personnelles » de Configuration a été retiré le
+  26/10/2026 à la demande de Yoann** : l'application n'affiche plus cette
+  vigilance, elle ne vit plus que dans `docs/RGPD.md`.
   Base légale, durée de conservation et information des personnes relèvent de la
   collectivité.
 - **Contexte sécurisé obligatoire** pour le GPS. Cause n°1 de « ça ne marche pas ».
