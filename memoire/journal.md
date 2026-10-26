@@ -7,6 +7,21 @@ Une entrée par session de travail, la plus récente en haut.
 
 ---
 
+## 26/10/2026 (suite) — Nouvelle adresse après transfert du dépôt
+
+**Constat en vérifiant la PR n° 22 :** `yoann-cramatte.github.io/Groma/` répond
+404, le site est servi sur `europasoft-eu.github.io/Groma/` (minuscules : 404).
+L'iPhone de Yoann affichait encore l'ancienne adresse, servie par le cache du
+service worker, figée sans mise à jour.
+
+- Liens remplacés : `README.md` (×2), `AppInfo.json` (site et dépôt),
+  `index.html` (commentaire de source AGPL), `memoire/etat-projet.md`.
+- Migration des données : le `localStorage` ne suit pas le changement d'origine.
+  Export GeoJSON par filière depuis l'ancienne installation, puis import.
+- `journal.md` garde l'ancienne adresse dans les entrées passées : historique.
+
+---
+
 ## 26/10/2026 — Retrait de trois textes de Configuration
 
 **Demande :** supprimer deux blocs de l'onglet Configuration (captures iPhone).

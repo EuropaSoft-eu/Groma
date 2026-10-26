@@ -5,7 +5,7 @@
 **Relever la position GPS d'un équipement sur le terrain, l'identifier, et repartir
 avec un fichier GeoJSON qui s'ouvre directement dans QGIS.**
 
-### ▶ [Ouvrir Groma](https://yoann-cramatte.github.io/Groma/)
+### ▶ [Ouvrir Groma](https://europasoft-eu.github.io/Groma/)
 
 Rien à installer pour essayer : le lien ouvre l'application. Pour l'avoir sur l'écran
 d'accueil du téléphone, voir [Installer sur le téléphone](#installer-sur-le-téléphone).
@@ -107,7 +107,7 @@ vingt vannes identiques.
 
 ## Installer sur le téléphone
 
-Groma est une **PWA**. Ouvrez [l'application](https://yoann-cramatte.github.io/Groma/)
+Groma est une **PWA**. Ouvrez [l'application](https://europasoft-eu.github.io/Groma/)
 dans le navigateur, puis :
 
 | Appareil | Geste |
