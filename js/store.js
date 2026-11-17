@@ -278,6 +278,15 @@
   }
 
   /**
+   * Remet une poignée déjà connue. Le sélecteur enregistre la nouvelle avant
+   * qu'on ait pu lire le fichier : si celui-ci est refusé, c'est la liaison
+   * d'avant qui doit revenir, pas un « absent » que l'agent n'a pas demandé.
+   */
+  function restaurerFichier(filiereId, handle) {
+    return idbSet(cleHandle(filiereId), handle);
+  }
+
+  /**
    * État de la liaison, sans jamais ouvrir de fenêtre :
    *   'absent'       aucune poignée — le fichier n'a jamais été relié
    *   'a-autoriser'  poignée valide, accès expiré
@@ -395,6 +404,7 @@
     etatLiaison: etatLiaison,
     demanderPermission: demanderPermission,
     oublierFichier: oublierFichier,
+    restaurerFichier: restaurerFichier,
     ecrireFichier: ecrireFichier,
     lireFichier: lireFichier,
     migrerAncienHandle: migrerAncienHandle,

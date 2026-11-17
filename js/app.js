@@ -282,9 +282,10 @@
   }
 
   /**
-   * Un fichier déjà présent dans le dossier n'est réécrit qu'après avoir été
-   * relu. Illisible, ou d'une autre filière : il est laissé intact et non relié
-   * — l'écraser détruirait un travail qu'on n'a pas su lire.
+   * Un fichier existant — trouvé dans le dossier ou lié à la main — n'est
+   * réécrit qu'après avoir été relu. Illisible, export SIG ou d'une autre
+   * filière, même pour une seule ligne : il est laissé intact et non relié —
+   * l'écraser détruirait un travail qu'on n'a pas su lire.
    */
   function reprendreFichierDuDossier(cle, texte) {
     if (!texte || !texte.trim()) return true;
@@ -2249,19 +2250,44 @@
     }).catch(function () { /* l'utilisateur a annulé le sélecteur */ });
   }
 
+  /**
+   * Même règle que le dossier de travail : un fichier qu'on n'a pas su
+   * reprendre n'est jamais réécrit. Le synchroniser quand même le remplaçait
+   * par les seuls relevés du navigateur — un export SIG, ou un fichier d'une
+   * autre filière choisi par erreur, était détruit sans retour.
+   */
   function actionOuvrirFichier(filiereId) {
-    Store.ouvrirFichierExistant(filiereId).then(function () {
+    var precedent = null;
+    var choisi = false;
+
+    function annulerLiaison() {
+      return precedent ? Store.restaurerFichier(filiereId, precedent) : Store.oublierFichier(filiereId);
+    }
+
+    Store.handleCourant(filiereId).then(function (h) {
+      precedent = h;
+      return Store.ouvrirFichierExistant(filiereId);
+    }).then(function () {
+      choisi = true;
       return Store.lireFichier(filiereId);
     }).then(function (texte) {
-      if (texte && texte.trim()) fusionnerReleves(texte, filiereId);
-      return synchroniserFichier(filiereId);
+      if (reprendreFichierDuDossier(filiereId, texte)) return synchroniserFichier(filiereId);
+      return annulerLiaison().then(function () {
+        toast('Fichier refusé et laissé intact : illisible, export SIG ou relevés d\'une autre filière.'
+          + (precedent ? ' La liaison précédente est conservée.' : ''), 'erreur');
+      });
+    }).catch(function () {
+      if (!choisi) return; // sélecteur annulé : rien n'a changé
+      return annulerLiaison().then(function () {
+        toast('Lecture du fichier impossible : il n\'a pas été relié.', 'erreur');
+      });
     }).then(function () {
       rafraichirBadgeFichier();
       rafraichirEtatFichier();
       rafraichirLiaison(filiereId);
       rafraichirStats();
       rafraichirListe(filiereId);
-    }).catch(function () { /* annulé */ });
+    });
   }
 
   function actionDelierFichier(filiereId) {

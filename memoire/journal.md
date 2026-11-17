@@ -7,6 +7,36 @@ Une entrée par session de travail, la plus récente en haut.
 
 ---
 
+## 17/11/2026 — « Lier un existant » n'écrase plus un fichier refusé
+
+**Défaut (reste à faire) :** `actionOuvrirFichier` appelait `synchroniserFichier`
+même quand `fusionnerReleves` refusait le fichier. Résultat : un export SIG, un
+fichier d'une autre filière ou un fichier illisible choisi par erreur était
+remplacé par les seuls relevés du navigateur. Cas aggravant découvert : un
+fichier *mixte* (quelques lignes d'une autre filière) était accepté
+partiellement puis réécrit sans ces lignes — perte silencieuse.
+
+- `actionOuvrirFichier` passe désormais par `reprendreFichierDuDossier`, comme le
+  dossier de travail : même critère de refus, une seule règle.
+- Refus ou lecture impossible : la poignée enregistrée par le sélecteur est
+  annulée. Si une liaison existait avant, elle est remise via le nouveau
+  `Store.restaurerFichier` ; sinon la filière est déliée. Toast explicite.
+- Arbitrage : un fichier mixte est refusé en bloc plutôt qu'importé en partie —
+  on ne peut pas le relier sans le réécrire, donc sans détruire les lignes
+  étrangères.
+- Vérifié : script Playwright jetable sur vrais fichiers (OPFS), six cas
+  (annulation, étranger, SIG, illisible, mixte, valide) + refus après une liaison
+  valide : quatre fichiers refusés intacts, liaison précédente conservée, fichier
+  valide importé et réécrit. Le même script sur l'ancien code montre les quatre
+  fichiers écrasés. Limite : Chromium headless plante en stockant une poignée
+  OPFS dans IndexedDB ; la table des poignées a été simulée en mémoire, la ligne
+  `idbSet` de `restaurerFichier` n'est donc pas couverte par ce test.
+- `audit-responsive` et `audit-pwa` sans défaut. Pour les lancer ici, `playwright`
+  doit être résolvable depuis `tests/` (imports ESM) : lien temporaire
+  `/home/user/node_modules` → `/opt/node-tools/node_modules`, retiré après.
+
+---
+
 ## 26/10/2026 (suite) — Nouvelle adresse après transfert du dépôt
 
 **Constat en vérifiant la PR n° 22 :** `yoann-cramatte.github.io/Groma/` répond
