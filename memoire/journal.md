@@ -7,6 +7,25 @@ Une entrée par session de travail, la plus récente en haut.
 
 ---
 
+## 17/11/2026 (suite) — Réglages GPS sans effet retirés
+
+**Constat :** « Délai maximal d'acquisition » (`timeoutGps`) et « Haute précision
+GPS » (`hautePrecision`) ne pilotaient que `Geo.localiser()`, que plus rien
+n'appelait. La seule acquisition, `localiserPrecis()`, force la haute précision
+et prend la durée de série pour délai. Un réglage qui ne fait rien trompe l'agent.
+
+- Retirés : les deux champs de Configuration, leurs clés dans `CONFIG_DEFAUT`,
+  `Geo.localiser()`. `messageErreur` reste, la série s'en sert.
+- Aucune migration : `lireConfig` ne garde que les clés de `CONFIG_DEFAUT`, les
+  anciennes valeurs stockées disparaissent à la lecture suivante.
+- Vérifié (Playwright jetable, géolocalisation simulée) : champs absents, case
+  Lambert toujours là, config réenregistrée sans les deux clés, série GPS menée
+  à terme sans erreur JavaScript. `audit-responsive` et `audit-pwa` sans défaut.
+- **Défaut trouvé au passage, non corrigé :** enregistrer la configuration
+  efface `fondCarte` et `fondsCarte` (voir reste à faire).
+
+---
+
 ## 17/11/2026 — « Lier un existant » n'écrase plus un fichier refusé
 
 **Défaut (reste à faire) :** `actionOuvrirFichier` appelait `synchroniserFichier`

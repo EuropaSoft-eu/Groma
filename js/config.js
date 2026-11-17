@@ -185,8 +185,6 @@
     operateur: '',
     collectivite: '',
     precisionMax: 20,
-    hautePrecision: true,
-    timeoutGps: 20,
     dureeAffinage: 30,
     afficherLambert: true,
     fondCarte: 'photo',

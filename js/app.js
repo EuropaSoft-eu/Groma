@@ -1631,14 +1631,9 @@
 
     var gps = el('div', { classe: 'grille' }, [
       champConfig('precisionMax', 'Seuil d\'alerte de précision (m)', 'number', { min: 1, max: 500, step: 1 }),
-      champConfig('timeoutGps', 'Délai maximal d\'acquisition (s)', 'number', { min: 5, max: 120, step: 1 }),
       champConfig('dureeAffinage', 'Durée de la mesure affinée (s)', 'number', { min: 5, max: 300, step: 1 }),
       el('div', { classe: 'champ' }, [
         el('label', { texte: 'Options' }),
-        el('div', { classe: 'case' }, [
-          el('input', { type: 'checkbox', id: 'cfg-hautePrecision' }),
-          el('label', { for: 'cfg-hautePrecision', texte: 'Haute précision GPS' })
-        ]),
         el('div', { classe: 'case' }, [
           el('input', { type: 'checkbox', id: 'cfg-afficherLambert' }),
           el('label', { for: 'cfg-afficherLambert', texte: 'Calculer les coordonnées Lambert 93' })
@@ -2164,9 +2159,7 @@
     document.getElementById('cfg-operateur').value = c.operateur;
     document.getElementById('cfg-collectivite').value = c.collectivite;
     document.getElementById('cfg-precisionMax').value = c.precisionMax;
-    document.getElementById('cfg-timeoutGps').value = c.timeoutGps;
     document.getElementById('cfg-dureeAffinage').value = c.dureeAffinage;
-    document.getElementById('cfg-hautePrecision').checked = !!c.hautePrecision;
     document.getElementById('cfg-afficherLambert').checked = !!c.afficherLambert;
     document.getElementById('cfg-separateur').value = c.separateur;
     document.getElementById('cfg-theme').value = c.theme;
@@ -2177,9 +2170,7 @@
       operateur: document.getElementById('cfg-operateur').value.trim(),
       collectivite: document.getElementById('cfg-collectivite').value.trim(),
       precisionMax: Math.max(1, Number(document.getElementById('cfg-precisionMax').value) || 20),
-      timeoutGps: Math.max(5, Number(document.getElementById('cfg-timeoutGps').value) || 20),
       dureeAffinage: Math.max(5, Number(document.getElementById('cfg-dureeAffinage').value) || 30),
-      hautePrecision: document.getElementById('cfg-hautePrecision').checked,
       afficherLambert: document.getElementById('cfg-afficherLambert').checked,
       separateur: document.getElementById('cfg-separateur').value,
       theme: document.getElementById('cfg-theme').value
