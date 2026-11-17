@@ -3,7 +3,7 @@
 > Mémoire de travail. À relire en début de session **avant** d'ouvrir le code,
 > à mettre à jour en fin de session. Évite de relire toute l'application à chaque fois.
 
-**Dernière mise à jour :** 17/11/2026 — la configuration ne perd plus les fonds de carte
+**Dernière mise à jour :** 17/11/2026 — photo aérienne vide à l'ouverture corrigée ; préchargement des tuiles validé, pas encore codé
 **Branche :** `claude/lucid-davinci-n0jpjq` (`claude/nouvelle-adresse` fusionnée, PR n° 23)
 **En ligne :** https://europasoft-eu.github.io/Groma/ — dépôt public, licence AGPL-3.0
 
@@ -221,6 +221,12 @@ navigateur headless sur quinze formats, de 280 px à 1180 px, portrait et paysag
    ailleurs. `enregistrerConfiguration` part d'une copie de la config en place ;
    la reconstruire depuis le formulaire a effacé les fonds personnalisés sans
    message (corrigé le 17/11/2026).
+29. **Le zoom maximal d'un fond se lit dans le GetCapabilities, pas dans la doc.**
+   L'orthophoto IGN (grille PM) s'arrête au niveau 19 ; déclarée à 20, elle
+   s'ouvrait vide. Les flux IGN sont joignables depuis l'environnement de
+   développement depuis le 17/11/2026 : tester sur le vrai service.
+30. **Une tuile d'un rendu périmé ne compte plus.** `carte.js` numérote chaque
+   rendu (`generation`) ; les échecs tardifs d'images retirées sont ignorés.
 
 ## Décisions prises
 
@@ -346,6 +352,17 @@ navigateur headless sur quinze formats, de 280 px à 1180 px, portrait et paysag
       affiché et l'app au premier plan ; positions servant **uniquement** à
       placer la carte, jamais à la mesure (invariant 12). Coût batterie à
       évaluer sur l'appareil de Yoann.
+- [ ] **Préchargement des tuiles autour de soi** — validé par Yoann le 17/11/2026,
+      **pas encore codé**. Paramètres : grand cercle **1 km** jusqu'au zoom 17,
+      petit cercle **300 m** aux zooms 18 et 19, rechargés en se déplaçant,
+      **plafond 1 Go**, les tuiles les plus anciennes effacées d'abord. Mesuré
+      sur le vrai service : tuile photo z19 ≈ 12 Ko, plan z19 ≈ 25 Ko ; CORS
+      ouvert (`access-control-allow-origin: *`), donc stockage non opaque
+      possible. CGU Géoplateforme (15/10/2024) : WMTS « non soumis à limite
+      d'usage », aucune interdiction de cache trouvée, aucune autorisation écrite
+      non plus → demande écrite à l'IGN conseillée. **Remet en cause
+      l'invariant 18** : son affirmation sur l'IGN n'a pas été retrouvée dans
+      les conditions (elle vaut pour OpenStreetMap).
 - [ ] **GPS n° 3 : zoom maximal différé** tant que la précision dépasse le seuil
       d'alerte (premiers fixes Wi-Fi/antenne à 50 m et plus).
 - [ ] Dédoublonnage à l'import sur `reference` en plus de `id` (saisie multi-appareils).

@@ -58,7 +58,10 @@
     photo: {
       libelle: 'Photo aérienne',
       url: GEOPF.replace('{couche}', 'ORTHOIMAGERY.ORTHOPHOTOS').replace('{format}', 'image/jpeg'),
-      zoomMax: 20,
+      // 19 et non 20 : le GetCapabilities de la Géoplateforme (grille PM) s'arrête
+      // au niveau 19, et une tuile z20 répond 404 (vérifié le 17/11/2026). À 20,
+      // la carte s'ouvrait vide. Le sur-zoom prend le relais au-delà.
+      zoomMax: 19,
       credit: '© IGN — Géoplateforme'
     },
     plan: {
@@ -122,6 +125,11 @@
     // Compte les tuiles en échec : sans réseau, la carte doit le dire au lieu de rester grise.
     var demandees = 0;
     var echouees = 0;
+    // Une tuile retirée par un nouveau rendu continue de charger : sans ce
+    // numéro, ses échecs tardifs comptaient contre le rendu suivant. À
+    // l'ouverture, les tuiles du point (0, 0) précédant le premier fixe GPS
+    // affichaient « fond indisponible » sur une carte bien chargée.
+    var generation = 0;
 
     function plafond() {
       var base = fonds[fondActif].zoomMax;
@@ -171,6 +179,7 @@
       var fragment = document.createDocumentFragment();
       demandees = 0;
       echouees = 0;
+      var gen = ++generation;
 
       for (var ty = y0; ty <= y1; ty++) {
         if (ty < 0 || ty >= max) continue;
@@ -189,10 +198,11 @@
           // Une tuile en échec laisse sinon une icône de lien brisé sur le fond.
           img.addEventListener('error', function () {
             this.style.display = 'none';
+            if (gen !== generation) return;
             echouees++;
             signalerEtat();
           });
-          img.addEventListener('load', signalerEtat);
+          img.addEventListener('load', function () { if (gen === generation) signalerEtat(); });
           img.src = fonds[fondActif].url
             .replace('{z}', zNatif).replace('{x}', wx).replace('{y}', ty);
           demandees++;

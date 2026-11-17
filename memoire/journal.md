@@ -7,6 +7,34 @@ Une entrée par session de travail, la plus récente en haut.
 
 ---
 
+## 17/11/2026 (suite 3) — Photo aérienne vide à l'ouverture
+
+**Contexte :** étude du préchargement des tuiles. Premier appel réel au service
+IGN depuis l'environnement (la sortie réseau était fermée jusque-là).
+
+**Défaut 1 :** la photo aérienne, fond par défaut, **s'ouvrait vide** avec
+« Fond de carte indisponible ». `carte.js` la déclarait jusqu'au zoom 20 ; le
+GetCapabilities de `data.geopf.fr/wmts` s'arrête à 19 pour ORTHOPHOTOS comme pour
+PLANIGNV2, et une tuile z20 répond 404. La fenêtre s'ouvrant au zoom maximal,
+les 36 tuiles demandées échouaient. L'hypothèse « z20 » datait de la création,
+écrite sans pouvoir appeler le service. → `zoomMax: 19`, le sur-zoom prend le
+relais. Un fond personnalisé recopié des fonds par défaut et enregistré garde
+son 20 : à corriger à la main dans Configuration.
+
+**Défaut 2 :** une fois la photo réparée, le bandeau « indisponible » restait.
+Les tuiles du point (0, 0), demandées avant le premier fixe GPS, échouaient après
+le rendu suivant et étaient comptées contre lui. → numéro de rendu, échecs
+périmés ignorés.
+
+- Vérifié (Playwright, vrai service IGN, position Altkirch) : avant 36 × 404 et
+  carte vide ; après tuiles z19 chargées, état `ok`. Réseau IGN coupé : bandeau
+  toujours affiché. `audit-responsive` et `audit-pwa` sans défaut.
+- Préchargement : paramètres validés (1 km jusqu'au z17, 300 m aux z18-19,
+  plafond 1 Go), mesures et conditions IGN consignées dans le reste à faire.
+  Pas encore codé.
+
+---
+
 ## 17/11/2026 (suite 2) — La configuration ne perd plus les fonds de carte
 
 **Défaut (trouvé à la séance précédente) :** `enregistrerConfiguration`
