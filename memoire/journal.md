@@ -7,6 +7,37 @@ Une entrée par session de travail, la plus récente en haut.
 
 ---
 
+## 17/11/2026 (suite 4) — Carte gardée hors ligne (v1.4)
+
+**Demande de Yoann, affinée en trois temps :** précharger la carte autour de soi ;
+puis deux cercles, 1 km pour se repérer et 300 m en détail ; puis ne pas garder
+les anciennes zones (« on travaille un village, puis on part dans un autre »),
+oubli après **7 jours** sans usage.
+
+- `js/tuiles.js` (nouveau) : cercles au centre de la **carte** (GPS et gestes),
+  grand 1 km z14-17, petit 300 m z18 → zoom max du fond ; seul le fond affiché ;
+  nouveau calcul après 150 m ; date d'usage rafraîchie au jour près ; purge à
+  7 jours puis plafond 200 Mo, du plus ancien au plus récent, au démarrage et à
+  chaque file vidée. Métadonnées en IndexedDB `groma-tuiles` : pas en
+  `localStorage`, qui porte les relevés et ne doit jamais saturer.
+- `service-worker.js` : sert les images d'un autre domaine depuis
+  `groma-tuiles` si elles y sont, sinon réseau ; n'écrit jamais ; épargne ce
+  cache à l'activation. VERSION `groma-5`, `tuiles.js` dans `COQUILLE`.
+- Configuration → statistiques : carte « Carte hors ligne » en Mo (jeton contre
+  le double affichage, la lecture est asynchrone).
+- **Choix tranché sans Yoann** : 200 Mo de plafond au lieu du 1 Go discuté avant
+  l'oubli à sept jours ; avec la purge, 1 Go n'avait plus d'objet.
+- Invariant 18 réécrit ; README (« Carte du village en cours »), AppInfo 1.4.
+- Vérifié (Playwright, vrai service IGN, Altkirch) : 314 tuiles attendues =
+  314 rangées, 3,8 Mo ; réseau coupé puis page rechargée → photo affichée, état
+  `ok` ; déplacement de 100 m → aucune requête, de 400 m → 150 nouvelles tuiles
+  seulement, retour → aucune ; entrées vieillies de 8 jours purgées (base et
+  cache) ; plafond : entrées factices de 100 Mo, les plus anciennes retirées
+  jusqu'à 105 Mo. `audit-responsive` et `audit-pwa` sans défaut.
+- **Non vérifié** : Safari (iPad/iPhone), durée de vie réelle du stockage.
+
+---
+
 ## 17/11/2026 (suite 3) — Photo aérienne vide à l'ouverture
 
 **Contexte :** étude du préchargement des tuiles. Premier appel réel au service

@@ -11,6 +11,7 @@
   var Csv = global.GromaCsv;
   var Geojson = global.GromaGeojson;
   var Geo = global.GromaGeo;
+  var Tuiles = global.GromaTuiles;
   var Carte = global.GromaCarte;
   var Catalogue = global.GromaCatalogue;
   var D = Cfg.DECIMALES;
@@ -1448,7 +1449,12 @@
       urls: fonds,
       fond: fonds[etat.config.fondCarte] ? etat.config.fondCarte : Object.keys(fonds)[0],
       etendueMinM: ETENDUE_CARTE_M,
-      surChangement: function () { surChangementCarte(filiereId); },
+      surChangement: function () {
+        surChangementCarte(filiereId);
+        // Le centre de la carte, pas le GPS : faire glisser la carte au bout
+        // d'une rue longue la charge aussi.
+        if (carte) Tuiles.autour(fonds[carte.fond()], carte.centre());
+      },
       surTuiles: function (t) {
         message.textContent = t.perdu
           ? 'Fond de carte indisponible — réseau absent ou service injoignable. '
@@ -2188,10 +2194,13 @@
     toast('Configuration enregistrée.', 'succes');
   }
 
+  var jetonStats = 0;
+
   function rafraichirStats() {
     var hote = document.getElementById('cfg-stats');
     if (!hote) return;
     vider(hote);
+    var jeton = ++jetonStats;
     Cfg.FILIERES.forEach(function (f) {
       hote.appendChild(el('div', { classe: 'stat', style: '--couleur-filiere:' + f.couleur }, [
         el('div', { classe: 'stat-valeur', texte: String(pointsDe(f.id).length) }),
@@ -2202,6 +2211,17 @@
       el('div', { classe: 'stat-valeur', texte: String(etat.points.length) }),
       el('div', { classe: 'stat-label', texte: 'Total' })
     ]));
+    // L'agent doit savoir sur quoi compter hors réseau : le navigateur peut
+    // vider cette réserve sans prévenir.
+    Tuiles.bilan().then(function (b) {
+      // Réponse asynchrone : un rafraîchissement plus récent a déjà reconstruit le bloc.
+      if (!b || jeton !== jetonStats) return;
+      var mo = b.octets / (1024 * 1024);
+      hote.appendChild(el('div', { classe: 'stat', title: 'Tuiles gardées autour des lieux de travail, oubliées après sept jours sans usage.' }, [
+        el('div', { classe: 'stat-valeur', texte: (mo < 10 ? mo.toFixed(1) : String(Math.round(mo))) + ' Mo' }),
+        el('div', { classe: 'stat-label', texte: 'Carte hors ligne' })
+      ]));
+    });
     rafraichirEtatFichier();
   }
 
@@ -2497,6 +2517,7 @@
     suivreHauteurEntete();
     brancherClavier();
     avertirContexte();
+    Tuiles.purger();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', demarrer);
