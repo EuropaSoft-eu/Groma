@@ -7,6 +7,24 @@ Une entrée par session de travail, la plus récente en haut.
 
 ---
 
+## 17/11/2026 (suite 2) — La configuration ne perd plus les fonds de carte
+
+**Défaut (trouvé à la séance précédente) :** `enregistrerConfiguration`
+reconstruisait `etat.config` à partir du seul formulaire. `fondsCarte` et
+`fondCarte` n'y figurent pas : à la lecture suivante, `lireConfig` les
+remettait aux valeurs par défaut. Tout fond personnalisé disparaissait dès
+qu'on enregistrait un réglage, sans message.
+
+- Correctif : copie de la configuration en place, puis écrasement des seuls
+  champs du formulaire. Une clé ajoutée plus tard hors formulaire est protégée
+  d'office. Invariant 28.
+- Vérifié (Playwright jetable) : fond personnalisé + fond choisi, enregistrement
+  de la configuration, rechargement → fond conservé, choisi, affiché dans le bloc
+  Fonds. Ancien code, même script : fond perdu. `audit-responsive` et
+  `audit-pwa` sans défaut.
+
+---
+
 ## 17/11/2026 (suite) — Réglages GPS sans effet retirés
 
 **Constat :** « Délai maximal d'acquisition » (`timeoutGps`) et « Haute précision

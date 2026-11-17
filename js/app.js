@@ -2165,16 +2165,23 @@
     document.getElementById('cfg-theme').value = c.theme;
   }
 
+  /**
+   * Le formulaire ne porte qu'une partie de la configuration : les fonds de
+   * carte s'enregistrent ailleurs (bloc Fonds, barre de la carte). Reconstruire
+   * l'objet à partir du seul formulaire les effaçait sans message — on part
+   * donc de la configuration en place et on n'écrase que ses propres champs.
+   */
   function enregistrerConfiguration() {
-    etat.config = {
-      operateur: document.getElementById('cfg-operateur').value.trim(),
-      collectivite: document.getElementById('cfg-collectivite').value.trim(),
-      precisionMax: Math.max(1, Number(document.getElementById('cfg-precisionMax').value) || 20),
-      dureeAffinage: Math.max(5, Number(document.getElementById('cfg-dureeAffinage').value) || 30),
-      afficherLambert: document.getElementById('cfg-afficherLambert').checked,
-      separateur: document.getElementById('cfg-separateur').value,
-      theme: document.getElementById('cfg-theme').value
-    };
+    var c = {};
+    Object.keys(etat.config).forEach(function (k) { c[k] = etat.config[k]; });
+    c.operateur = document.getElementById('cfg-operateur').value.trim();
+    c.collectivite = document.getElementById('cfg-collectivite').value.trim();
+    c.precisionMax = Math.max(1, Number(document.getElementById('cfg-precisionMax').value) || 20);
+    c.dureeAffinage = Math.max(5, Number(document.getElementById('cfg-dureeAffinage').value) || 30);
+    c.afficherLambert = document.getElementById('cfg-afficherLambert').checked;
+    c.separateur = document.getElementById('cfg-separateur').value;
+    c.theme = document.getElementById('cfg-theme').value;
+    etat.config = c;
     Store.ecrireConfig(etat.config);
     synchroniserTout();
     synchroniserParametres();

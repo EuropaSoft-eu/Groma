@@ -3,7 +3,7 @@
 > Mémoire de travail. À relire en début de session **avant** d'ouvrir le code,
 > à mettre à jour en fin de session. Évite de relire toute l'application à chaque fois.
 
-**Dernière mise à jour :** 17/11/2026 — réglages GPS sans effet retirés
+**Dernière mise à jour :** 17/11/2026 — la configuration ne perd plus les fonds de carte
 **Branche :** `claude/lucid-davinci-n0jpjq` (`claude/nouvelle-adresse` fusionnée, PR n° 23)
 **En ligne :** https://europasoft-eu.github.io/Groma/ — dépôt public, licence AGPL-3.0
 
@@ -216,6 +216,11 @@ navigateur headless sur quinze formats, de 280 px à 1180 px, portrait et paysag
    relié. Pour « Lier un existant », la liaison d'avant est remise
    (`Store.restaurerFichier`) : le sélecteur enregistre la poignée avant la
    lecture. Toute nouvelle façon de relier un fichier doit garder cette relecture.
+28. **Un formulaire n'écrit que ses propres champs de configuration.**
+   `etat.config` est partagé : fonds de carte, fond choisi et thème s'enregistrent
+   ailleurs. `enregistrerConfiguration` part d'une copie de la config en place ;
+   la reconstruire depuis le formulaire a effacé les fonds personnalisés sans
+   message (corrigé le 17/11/2026).
 
 ## Décisions prises
 
@@ -334,11 +339,8 @@ navigateur headless sur quinze formats, de 280 px à 1180 px, portrait et paysag
 - [x] ~~Export SIG allégé~~ — 21/10/2026, sans les colonnes GPS.
 - [x] ~~Corriger « Lier un existant »~~ — 17/11/2026. Fichier refusé laissé
       intact, liaison précédente conservée (invariant 27).
-- [ ] **Enregistrer la configuration efface les fonds de carte personnalisés.**
-      `enregistrerConfiguration` reconstruit `etat.config` sans `fondCarte` ni
-      `fondsCarte` ; `lireConfig` les ramène alors aux valeurs par défaut.
-      Constaté le 17/11/2026 dans la config stockée après enregistrement, non
-      corrigé (un changement à la fois). À corriger en priorité : perte silencieuse.
+- [x] ~~Enregistrer la configuration efface les fonds de carte~~ — 17/11/2026
+      (invariant 28).
 - [x] ~~GPS n° 1 : retirer les réglages sans effet~~ — 17/11/2026.
 - [ ] **GPS n° 2 : préchauffage** — écoute GPS tant qu'un onglet de relevé est
       affiché et l'app au premier plan ; positions servant **uniquement** à
