@@ -17,7 +17,7 @@
  */
 'use strict';
 
-var VERSION = 'groma-6';
+var VERSION = 'groma-7';
 // Doit rester égal à GromaTuiles.CACHE. Hors VERSION : une livraison ne doit pas
 // vider la carte du village en cours.
 var TUILES = 'groma-tuiles';
@@ -60,12 +60,11 @@ self.addEventListener('install', function (ev) {
       .then(function (cache) {
         return cache.addAll(COQUILLE.map(function (u) { return new Request(u, { cache: 'reload' }); }));
       })
-      // Sans cela, la nouvelle version attend la fermeture de tous les onglets.
-      // En PWA installée, l'application peut rester ouverte des jours : un
-      // correctif n'atteindrait jamais le terrain.
-      .then(function () { return self.skipWaiting(); })
   );
 });
+// Pas de skipWaiting à l'installation : la nouvelle version attend que l'agent
+// accepte le redémarrage (message SKIP_WAITING). Une activation silencieuse
+// rechargerait la page pendant une saisie.
 
 self.addEventListener('activate', function (ev) {
   ev.waitUntil(
@@ -79,6 +78,11 @@ self.addEventListener('activate', function (ev) {
   );
 });
 
+// Activation demandée par la page, une fois l'agent d'accord.
+self.addEventListener('message', function (ev) {
+  if (ev.data === 'SKIP_WAITING') self.skipWaiting();
+});
+
 /** Une réponse partielle ou opaque mise en cache casserait le chargement suivant. */
 function conservable(reponse) {
   return reponse && reponse.ok && reponse.type === 'basic';
@@ -89,6 +93,12 @@ self.addEventListener('fetch', function (ev) {
   if (requete.method !== 'GET') return;
 
   var url = new URL(requete.url);
+  // Vérification de version (AppInfo.json?verif=…) : la page veut le fichier du
+  // serveur, pas la copie rangée. Rien n'est mis en cache.
+  if (url.origin === self.location.origin && url.searchParams.has('verif')) {
+    ev.respondWith(fetch(requete));
+    return;
+  }
   if (url.origin !== self.location.origin) {
     // Tuile d'un autre domaine : servie depuis la réserve si elle y est, sinon
     // laissée au réseau. Le worker ne range jamais rien : c'est la page qui
