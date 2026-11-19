@@ -1747,8 +1747,68 @@
       blocFichier,
       construireBlocCatalogue(),
       blocDonnees,
-      blocFonds
+      blocFonds,
+      construireBlocApropos()
     ]);
+  }
+
+  /**
+   * Version et historique lus dans AppInfo.json : l'identité de l'application
+   * ne vit nulle part ailleurs. Le fichier est inscrit dans COQUILLE, donc
+   * disponible hors ligne ; s'il manque malgré tout, la section le dit au lieu
+   * de rester vide.
+   */
+  function construireBlocApropos() {
+    var zone = el('div', { id: 'cfg-apropos-contenu' }, [
+      el('p', { classe: 'note', texte: 'Chargement des informations de version…' })
+    ]);
+
+    fetch('AppInfo.json', { cache: 'no-cache' })
+      .then(function (rep) {
+        if (!rep.ok) throw new Error('AppInfo.json ' + rep.status);
+        return rep.json();
+      })
+      .then(function (info) {
+        var histo = info.changelog || [];
+        var dernier = histo[0] || { version: info.version, date: '', changes: [] };
+        var anciennes = histo.slice(1);
+
+        vider(zone);
+        zone.appendChild(el('p', { classe: 'note', texte: 'Version ' + dernier.version + (dernier.date ? ' du ' + dateFr(dernier.date) : '') }));
+        zone.appendChild(listeChangements(dernier.changes));
+        if (anciennes.length) {
+          zone.appendChild(el('details', { classe: 'historique' }, [
+            el('summary', { texte: 'Versions précédentes' })
+          ].concat(anciennes.map(function (entree) {
+            return el('div', null, [
+              el('p', { classe: 'note', texte: 'Version ' + entree.version + ' du ' + dateFr(entree.date) }),
+              listeChangements(entree.changes)
+            ]);
+          }))));
+        }
+        zone.appendChild(el('p', { classe: 'note' }, [
+          info.copyright + ' · ' + info.company + ' · Contact : ',
+          el('a', { href: 'mailto:' + info.contact, texte: info.contact })
+        ]));
+      })
+      .catch(function () {
+        vider(zone);
+        zone.appendChild(el('p', { classe: 'note', texte: 'Informations de version indisponibles.' }));
+      });
+
+    return el('section', { classe: 'bloc' }, [el('h2', { texte: 'À propos' }), zone]);
+  }
+
+  function listeChangements(changes) {
+    return el('ul', { classe: 'changelog' }, (changes || []).map(function (c) {
+      return el('li', { texte: c });
+    }));
+  }
+
+  /** « 2026-11-19 » → « 19/11/2026 ». */
+  function dateFr(iso) {
+    var p = iso.split('-');
+    return p[2] + '/' + p[1] + '/' + p[0];
   }
 
   /** Une carte par filière : nom du fichier, état de liaison et actions associées. */

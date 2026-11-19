@@ -17,7 +17,7 @@
  */
 'use strict';
 
-var VERSION = 'groma-5';
+var VERSION = 'groma-6';
 // Doit rester égal à GromaTuiles.CACHE. Hors VERSION : une livraison ne doit pas
 // vider la carte du village en cours.
 var TUILES = 'groma-tuiles';
@@ -30,6 +30,7 @@ var COQUILLE = [
   './index.html',
   './manifest.webmanifest',
   './favicon.svg',
+  './AppInfo.json',
   './css/style.css',
   // Chargée par la feuille de style, pas par index.html : l'audit ne la voit
   // pas, il faut l'inscrire à la main. Absente, les titres retombent en police
