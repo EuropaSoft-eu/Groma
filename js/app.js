@@ -2551,6 +2551,67 @@
     }
   }
 
+  /**
+   * Compare la version chargée à celle du serveur, à l'ouverture. La copie
+   * chargée vient du cache (AppInfo.json sans paramètre) ; la copie du serveur
+   * passe par « ?verif », que le service worker ne met jamais en cache. Une
+   * version plus récente ne s'applique jamais seule : l'agent décide.
+   */
+  function verifierMiseAJour() {
+    var chargee = null;
+    fetch('AppInfo.json')
+      .then(function (rep) { return rep.json(); })
+      .then(function (local) {
+        chargee = local.version;
+        return fetch('AppInfo.json?verif=' + Date.now(), { cache: 'no-store' });
+      })
+      .then(function (rep) {
+        if (!rep.ok) throw new Error('AppInfo.json ' + rep.status);
+        return rep.json();
+      })
+      .then(function (distante) {
+        if (chargee && distante.version && distante.version !== chargee) {
+          afficherBandeauMiseAJour(distante.version);
+        }
+      })
+      .catch(function () { /* hors ligne : rien à proposer, on continue */ });
+  }
+
+  function afficherBandeauMiseAJour(version) {
+    if (document.getElementById('bandeau-maj')) return;
+    var bandeau = el('div', { id: 'bandeau-maj', classe: 'bandeau-maj', role: 'status' }, [
+      el('p', { texte: 'Nouvelle version ' + version + ' disponible.' }),
+      el('div', { classe: 'actions' }, [
+        el('button', {
+          type: 'button', classe: 'btn-primaire btn-compact', texte: 'Redémarrer maintenant',
+          onclick: function () { accepterMiseAJour(); }
+        }),
+        el('button', {
+          type: 'button', classe: 'btn-compact', texte: 'Plus tard',
+          onclick: function () { bandeau.parentNode.removeChild(bandeau); }
+        })
+      ])
+    ]);
+    document.body.appendChild(bandeau);
+  }
+
+  function accepterMiseAJour() {
+    if (document.body.hasAttribute('data-modale')) {
+      toast('Terminez la saisie en cours, puis redémarrez.', 'info');
+      return;
+    }
+    var pret = window.GromaMaj ? window.GromaMaj.accepter() : Promise.resolve(false);
+    pret.then(function (ok) {
+      if (ok) {
+        toast('Redémarrage de Groma…', 'info');
+      } else {
+        toast('Mise à jour pas encore prête, réessayez dans un instant.', 'info');
+      }
+    }).catch(function () {
+      toast('Mise à jour impossible pour le moment.', 'info');
+    });
+  }
+
   function demarrer() {
     etat.config = Store.lireConfig();
     appliquerTheme(etat.config.theme);
@@ -2577,6 +2638,7 @@
     suivreHauteurEntete();
     brancherClavier();
     avertirContexte();
+    verifierMiseAJour();
     Tuiles.purger();
   }
 

@@ -702,6 +702,22 @@ button:focus-visible, a:focus-visible, summary:focus-visible {
 .changelog { margin: 6px 0 12px; padding-left: 1.2em; font-size: 0.9rem; }
 .changelog li + li { margin-top: 4px; }
 .historique { margin-top: 12px; }
+
+/* Bandeau de mise à jour : posé en bas, au-dessus de la marge d'encoche. */
+.bandeau-maj {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 60;
+  background: var(--encre);
+  color: var(--fond);
+  border-radius: 14px;
+  padding: 12px 14px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+.bandeau-maj p { margin: 0 0 8px; font-weight: 600; }
+.bandeau-maj .actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .historique summary { cursor: pointer; font-weight: 600; min-height: 44px; display: flex; align-items: center; }
 
 .note {

@@ -214,10 +214,14 @@ navigateur headless sur quinze formats, de 280 px à 1180 px, portrait et paysag
 25. **Une couleur de filière ne sert jamais telle quelle en texte.** Passer par
    `--accent-texte` ou un `color-mix(... var(--texte))` : en brut, le vert et le
    bleu ciel tombent sous 3:1 sur le papier clair.
-26. **Le rechargement automatique d'une nouvelle version épargne la mesure en cours.**
-   `index.html` recharge la page sur `controllerchange`, sauf si `body[data-modale]`
-   est posé. Une nouvelle fenêtre de saisie doit poser cet attribut, sinon une
-   livraison pendant la saisie la viderait.
+26. **Une nouvelle version ne s'applique jamais seule.** Le service worker n'appelle
+   plus `skipWaiting()` à l'installation : il attend le message `SKIP_WAITING`. À
+   l'ouverture, `app.js` (`verifierMiseAJour`) compare la version chargée à celle du
+   serveur (`AppInfo.json?verif=…`, jamais mis en cache) et affiche un bandeau. Le
+   redémarrage n'a lieu qu'au clic sur « Redémarrer » (`window.GromaMaj.accepter`) ;
+   `index.html` ne recharge alors que sur `controllerchange` et seulement si
+   `body[data-modale]` n'est pas posé. Une nouvelle fenêtre de saisie doit poser cet
+   attribut, sinon un redémarrage pendant la saisie la viderait.
 27. **Un fichier existant n'est jamais écrasé sans être lu.** Les deux chemins de
    liaison — `actionChoisirDossier` et `actionOuvrirFichier` (« Lier un
    existant ») — passent par `reprendreFichierDuDossier` : illisible, export SIG

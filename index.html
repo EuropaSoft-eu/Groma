@@ -75,15 +75,38 @@
       // nouvelle version : elle se recharge pour l'afficher, au lieu d'attendre
       // l'ouverture suivante. Sauf pendant une mesure — un rechargement
       // perdrait la saisie en cours ; la nouvelle version attendra.
+      // Le rechargement n'a lieu qu'après l'accord de l'agent (bandeau de
+      // app.js) : une version nouvelle ne s'applique jamais seule.
       var dejaControlee = !!navigator.serviceWorker.controller;
       var rechargee = false;
+      var miseAJourAcceptee = false;
       navigator.serviceWorker.addEventListener('controllerchange', function () {
-        if (!dejaControlee || rechargee || document.body.hasAttribute('data-modale')) return;
+        if (!dejaControlee || !miseAJourAcceptee || rechargee || document.body.hasAttribute('data-modale')) return;
         rechargee = true;
         window.location.reload();
       });
       window.addEventListener('load', function () {
-        navigator.serviceWorker.register('service-worker.js').catch(function () {});
+        navigator.serviceWorker.register('service-worker.js').then(function (reg) {
+          // Appelé par app.js au clic sur « Redémarrer ». Résout false si la
+          // nouvelle version n'est pas encore prête à être activée.
+          window.GromaMaj = {
+            accepter: function () {
+              return reg.update().then(function () {
+                var attente = reg.waiting || reg.installing;
+                if (!attente) return false;
+                miseAJourAcceptee = true;
+                if (reg.waiting) {
+                  reg.waiting.postMessage('SKIP_WAITING');
+                } else {
+                  attente.addEventListener('statechange', function () {
+                    if (attente.state === 'installed') attente.postMessage('SKIP_WAITING');
+                  });
+                }
+                return true;
+              });
+            }
+          };
+        }).catch(function () {});
       });
     }
   </script>
