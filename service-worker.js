@@ -1,7 +1,7 @@
 /**
  * Service worker de Groma — rend l'application installable et utilisable sans
- * réseau. Seules les tuiles de carte manquent hors ligne : elles sont servies
- * par des domaines tiers, volontairement pas interceptées ici (voir plus bas).
+ * réseau. Les tuiles de carte du village en cours sont servies depuis la
+ * réserve que remplit js/tuiles.js (voir plus bas) ; les autres manquent.
  *
  * Stratégie : **cache d'abord, revalidation en arrière-plan**.
  *
@@ -17,7 +17,10 @@
  */
 'use strict';
 
-var VERSION = 'groma-4';
+var VERSION = 'groma-5';
+// Doit rester égal à GromaTuiles.CACHE. Hors VERSION : une livraison ne doit pas
+// vider la carte du village en cours.
+var TUILES = 'groma-tuiles';
 
 // Tout ce qu'il faut pour démarrer hors réseau. `addAll` est atomique : si un
 // seul fichier manque, l'installation échoue et l'ancien cache reste en place —
@@ -40,6 +43,7 @@ var COQUILLE = [
   './js/geojson.js',
   './js/store.js',
   './js/geo.js',
+  './js/tuiles.js',
   './js/app.js',
   './icons/icone-192.png',
   './icons/icone-512.png',
@@ -67,7 +71,7 @@ self.addEventListener('activate', function (ev) {
     caches.keys()
       .then(function (noms) {
         return Promise.all(noms.map(function (n) {
-          return n === VERSION ? null : caches.delete(n);
+          return n === VERSION || n === TUILES ? null : caches.delete(n);
         }));
       })
       .then(function () { return self.clients.claim(); })
@@ -83,12 +87,19 @@ self.addEventListener('fetch', function (ev) {
   var requete = ev.request;
   if (requete.method !== 'GET') return;
 
-  // Les tuiles viennent de data.geopf.fr et tile.openstreetmap.org. Les laisser
-  // au navigateur est délibéré : leurs conditions d'usage proscrivent la
-  // constitution de réserves locales, et une carte périmée sur un relevé vaut
-  // moins qu'une carte absente qui le dit.
   var url = new URL(requete.url);
-  if (url.origin !== self.location.origin) return;
+  if (url.origin !== self.location.origin) {
+    // Tuile d'un autre domaine : servie depuis la réserve si elle y est, sinon
+    // laissée au réseau. Le worker ne range jamais rien : c'est la page qui
+    // choisit quoi garder, et pour sept jours seulement.
+    if (requete.destination !== 'image') return;
+    ev.respondWith(
+      caches.open(TUILES)
+        .then(function (cache) { return cache.match(requete.url, { ignoreVary: true }); })
+        .then(function (enReserve) { return enReserve || fetch(requete); })
+    );
+    return;
+  }
 
   ev.respondWith(
     caches.match(requete).then(function (enCache) {

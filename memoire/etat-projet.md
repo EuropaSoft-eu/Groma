@@ -3,8 +3,8 @@
 > Mémoire de travail. À relire en début de session **avant** d'ouvrir le code,
 > à mettre à jour en fin de session. Évite de relire toute l'application à chaque fois.
 
-**Dernière mise à jour :** 26/10/2026 — nouvelle adresse après transfert du dépôt
-**Branche :** `claude/nouvelle-adresse` (`claude/retrait-blocs-config` fusionnée, PR n° 22)
+**Dernière mise à jour :** 17/11/2026 — carte gardée hors ligne autour du lieu de travail (v1.4)
+**Branche :** `claude/lucid-davinci-n0jpjq` (`claude/nouvelle-adresse` fusionnée, PR n° 23)
 **En ligne :** https://europasoft-eu.github.io/Groma/ — dépôt public, licence AGPL-3.0
 
 > **Dépôt transféré chez `EuropaSoft-eu/Groma`.** L'ancienne adresse
@@ -60,7 +60,8 @@ navigateur headless sur quinze formats, de 280 px à 1180 px, portrait et paysag
 | `js/csv.js` | RFC 4180, BOM UTF-8, détection de séparateur — **catalogue uniquement** | oui, aller-retour testé |
 | `js/geojson.js` | RFC 7946 — **seul format des relevés** : export, fichier lié, import | oui, aller-retour testé |
 | `js/store.js` | `localStorage` (points, config, compteurs, favoris) + IndexedDB (handles) | oui |
-| `js/geo.js` | API Geolocation, relevé ponctuel et série affinée | oui, agrégation testée |
+| `js/geo.js` | API Geolocation, série affinée (seule voie d'acquisition) | oui, agrégation testée |
+| `js/tuiles.js` | Carte gardée hors ligne : cercles 1 km (z14-17) et 300 m (z18+), oubli à 7 jours, plafond 200 Mo | oui, testé sur le vrai service |
 | `js/carte.js` | Visualiseur de tuiles WMTS/XYZ, fonds gratuits, validation | oui, projection vérifiée |
 | `js/app.js` | Construction du DOM, formulaires, liste, configuration | oui |
 | `serveur.py` | Serveur local — indispensable, le GPS refuse `file://` | oui |
@@ -164,9 +165,17 @@ navigateur headless sur quinze formats, de 280 px à 1180 px, portrait et paysag
 17. **`start_url` et `scope` du manifeste restent relatifs (`.`).** Sur GitHub
    Pages l'application vit sous `/<dépôt>/` : un `/` absolu la sortirait de sa
    portée et empêcherait l'installation.
-18. **Les tuiles ne sont jamais mises en cache.** Les conditions d'usage de l'IGN
-   et d'OpenStreetMap proscrivent la constitution de réserves locales. Le service
-   worker n'intercepte que le même domaine, délibérément.
+18. **Les tuiles ne sont gardées que là où l'on travaille, et sept jours au plus.**
+   (Réécrit le 17/11/2026 : l'ancienne version, « jamais de cache, l'IGN
+   l'interdit », ne se retrouve pas dans les CGU de la Géoplateforme.) Règles :
+   - `js/tuiles.js` télécharge, range et purge ; le **service worker ne fait que
+     servir** la réserve `groma-tuiles`, il n'écrit jamais. Il épargne ce cache
+     à l'activation : une livraison ne doit pas vider la carte du village.
+   - Téléchargement **en CORS uniquement** : une réponse opaque ne dit pas sa
+     taille et compte pour des mégaoctets dans le quota de Chrome.
+   - Une réponse non image (404 XML de la Géoplateforme) n'est jamais rangée.
+   - Pas de préchargement de territoire : OpenStreetMap l'interdit, et un
+     stockage gros se fait vider par le navigateur.
 19. **Toute mutation de relevés appelle `marquerModifie`**, toute sortie réussie
    `marquerSauvegarde`. C'est ce qui pilote le bandeau « relevés encore dans ce
    seul navigateur ». Une mutation qui l'oublie rend le bandeau menteur, ce qui
@@ -209,10 +218,24 @@ navigateur headless sur quinze formats, de 280 px à 1180 px, portrait et paysag
    `index.html` recharge la page sur `controllerchange`, sauf si `body[data-modale]`
    est posé. Une nouvelle fenêtre de saisie doit poser cet attribut, sinon une
    livraison pendant la saisie la viderait.
-27. **Un fichier trouvé dans le dossier de travail n'est jamais écrasé sans être lu.**
-   `actionChoisirDossier` relit chaque fichier présent ; illisible ou d'une autre
-   filière, il est délié et laissé tel quel. Toute nouvelle façon de relier des
-   fichiers en masse doit garder cette relecture.
+27. **Un fichier existant n'est jamais écrasé sans être lu.** Les deux chemins de
+   liaison — `actionChoisirDossier` et `actionOuvrirFichier` (« Lier un
+   existant ») — passent par `reprendreFichierDuDossier` : illisible, export SIG
+   ou une seule ligne d'une autre filière, le fichier est laissé tel quel et non
+   relié. Pour « Lier un existant », la liaison d'avant est remise
+   (`Store.restaurerFichier`) : le sélecteur enregistre la poignée avant la
+   lecture. Toute nouvelle façon de relier un fichier doit garder cette relecture.
+28. **Un formulaire n'écrit que ses propres champs de configuration.**
+   `etat.config` est partagé : fonds de carte, fond choisi et thème s'enregistrent
+   ailleurs. `enregistrerConfiguration` part d'une copie de la config en place ;
+   la reconstruire depuis le formulaire a effacé les fonds personnalisés sans
+   message (corrigé le 17/11/2026).
+29. **Le zoom maximal d'un fond se lit dans le GetCapabilities, pas dans la doc.**
+   L'orthophoto IGN (grille PM) s'arrête au niveau 19 ; déclarée à 20, elle
+   s'ouvrait vide. Les flux IGN sont joignables depuis l'environnement de
+   développement depuis le 17/11/2026 : tester sur le vrai service.
+30. **Une tuile d'un rendu périmé ne compte plus.** `carte.js` numérote chaque
+   rendu (`generation`) ; les échecs tardifs d'images retirées sont ignorés.
 
 ## Décisions prises
 
@@ -329,10 +352,23 @@ navigateur headless sur quinze formats, de 280 px à 1180 px, portrait et paysag
       `.onglets { grid-template-columns: repeat(4, 1fr) }` est codé en dur dans
       `css/style.css` et doit devenir dynamique pour un cinquième onglet.
 - [x] ~~Export SIG allégé~~ — 21/10/2026, sans les colonnes GPS.
-- [ ] **Corriger « Lier un existant »** : `actionOuvrirFichier` écrase le fichier
-      choisi même quand `fusionnerReleves` l'a refusé (illisible, autre filière,
-      export SIG). Doit délier et laisser le fichier intact, comme
-      `actionChoisirDossier`.
+- [x] ~~Corriger « Lier un existant »~~ — 17/11/2026. Fichier refusé laissé
+      intact, liaison précédente conservée (invariant 27).
+- [x] ~~Enregistrer la configuration efface les fonds de carte~~ — 17/11/2026
+      (invariant 28).
+- [x] ~~GPS n° 1 : retirer les réglages sans effet~~ — 17/11/2026.
+- [ ] **GPS n° 2 : préchauffage** — écoute GPS tant qu'un onglet de relevé est
+      affiché et l'app au premier plan ; positions servant **uniquement** à
+      placer la carte, jamais à la mesure (invariant 12). Coût batterie à
+      évaluer sur l'appareil de Yoann.
+- [x] ~~Carte gardée hors ligne~~ — 17/11/2026 (invariant 18 réécrit).
+- [ ] **Demander à l'IGN une confirmation écrite** que garder des tuiles sept
+      jours est admis (https://cartes.gouv.fr/aide/fr/nous-ecrire). À faire par
+      Yoann ou la collectivité, pas par Claude.
+- [ ] **Essai terrain de la carte hors ligne**, surtout sur iPad/iPhone : le
+      stockage y est le plus vite vidé. Non vérifié hors Chromium.
+- [ ] **GPS n° 3 : zoom maximal différé** tant que la précision dépasse le seuil
+      d'alerte (premiers fixes Wi-Fi/antenne à 50 m et plus).
 - [ ] Dédoublonnage à l'import sur `reference` en plus de `id` (saisie multi-appareils).
 - [ ] Export consolidé des trois filières, si le besoin d'une vue unique revient.
 - [ ] Mise en cache des tuiles pour l'ajustement hors réseau.

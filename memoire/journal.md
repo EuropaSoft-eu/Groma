@@ -7,6 +7,132 @@ Une entrée par session de travail, la plus récente en haut.
 
 ---
 
+## 17/11/2026 (suite 4) — Carte gardée hors ligne (v1.4)
+
+**Demande de Yoann, affinée en trois temps :** précharger la carte autour de soi ;
+puis deux cercles, 1 km pour se repérer et 300 m en détail ; puis ne pas garder
+les anciennes zones (« on travaille un village, puis on part dans un autre »),
+oubli après **7 jours** sans usage.
+
+- `js/tuiles.js` (nouveau) : cercles au centre de la **carte** (GPS et gestes),
+  grand 1 km z14-17, petit 300 m z18 → zoom max du fond ; seul le fond affiché ;
+  nouveau calcul après 150 m ; date d'usage rafraîchie au jour près ; purge à
+  7 jours puis plafond 200 Mo, du plus ancien au plus récent, au démarrage et à
+  chaque file vidée. Métadonnées en IndexedDB `groma-tuiles` : pas en
+  `localStorage`, qui porte les relevés et ne doit jamais saturer.
+- `service-worker.js` : sert les images d'un autre domaine depuis
+  `groma-tuiles` si elles y sont, sinon réseau ; n'écrit jamais ; épargne ce
+  cache à l'activation. VERSION `groma-5`, `tuiles.js` dans `COQUILLE`.
+- Configuration → statistiques : carte « Carte hors ligne » en Mo (jeton contre
+  le double affichage, la lecture est asynchrone).
+- **Choix tranché sans Yoann** : 200 Mo de plafond au lieu du 1 Go discuté avant
+  l'oubli à sept jours ; avec la purge, 1 Go n'avait plus d'objet.
+- Invariant 18 réécrit ; README (« Carte du village en cours »), AppInfo 1.4.
+- Vérifié (Playwright, vrai service IGN, Altkirch) : 314 tuiles attendues =
+  314 rangées, 3,8 Mo ; réseau coupé puis page rechargée → photo affichée, état
+  `ok` ; déplacement de 100 m → aucune requête, de 400 m → 150 nouvelles tuiles
+  seulement, retour → aucune ; entrées vieillies de 8 jours purgées (base et
+  cache) ; plafond : entrées factices de 100 Mo, les plus anciennes retirées
+  jusqu'à 105 Mo. `audit-responsive` et `audit-pwa` sans défaut.
+- **Non vérifié** : Safari (iPad/iPhone), durée de vie réelle du stockage.
+
+---
+
+## 17/11/2026 (suite 3) — Photo aérienne vide à l'ouverture
+
+**Contexte :** étude du préchargement des tuiles. Premier appel réel au service
+IGN depuis l'environnement (la sortie réseau était fermée jusque-là).
+
+**Défaut 1 :** la photo aérienne, fond par défaut, **s'ouvrait vide** avec
+« Fond de carte indisponible ». `carte.js` la déclarait jusqu'au zoom 20 ; le
+GetCapabilities de `data.geopf.fr/wmts` s'arrête à 19 pour ORTHOPHOTOS comme pour
+PLANIGNV2, et une tuile z20 répond 404. La fenêtre s'ouvrant au zoom maximal,
+les 36 tuiles demandées échouaient. L'hypothèse « z20 » datait de la création,
+écrite sans pouvoir appeler le service. → `zoomMax: 19`, le sur-zoom prend le
+relais. Un fond personnalisé recopié des fonds par défaut et enregistré garde
+son 20 : à corriger à la main dans Configuration.
+
+**Défaut 2 :** une fois la photo réparée, le bandeau « indisponible » restait.
+Les tuiles du point (0, 0), demandées avant le premier fixe GPS, échouaient après
+le rendu suivant et étaient comptées contre lui. → numéro de rendu, échecs
+périmés ignorés.
+
+- Vérifié (Playwright, vrai service IGN, position Altkirch) : avant 36 × 404 et
+  carte vide ; après tuiles z19 chargées, état `ok`. Réseau IGN coupé : bandeau
+  toujours affiché. `audit-responsive` et `audit-pwa` sans défaut.
+- Préchargement : paramètres validés (1 km jusqu'au z17, 300 m aux z18-19,
+  plafond 1 Go), mesures et conditions IGN consignées dans le reste à faire.
+  Pas encore codé.
+
+---
+
+## 17/11/2026 (suite 2) — La configuration ne perd plus les fonds de carte
+
+**Défaut (trouvé à la séance précédente) :** `enregistrerConfiguration`
+reconstruisait `etat.config` à partir du seul formulaire. `fondsCarte` et
+`fondCarte` n'y figurent pas : à la lecture suivante, `lireConfig` les
+remettait aux valeurs par défaut. Tout fond personnalisé disparaissait dès
+qu'on enregistrait un réglage, sans message.
+
+- Correctif : copie de la configuration en place, puis écrasement des seuls
+  champs du formulaire. Une clé ajoutée plus tard hors formulaire est protégée
+  d'office. Invariant 28.
+- Vérifié (Playwright jetable) : fond personnalisé + fond choisi, enregistrement
+  de la configuration, rechargement → fond conservé, choisi, affiché dans le bloc
+  Fonds. Ancien code, même script : fond perdu. `audit-responsive` et
+  `audit-pwa` sans défaut.
+
+---
+
+## 17/11/2026 (suite) — Réglages GPS sans effet retirés
+
+**Constat :** « Délai maximal d'acquisition » (`timeoutGps`) et « Haute précision
+GPS » (`hautePrecision`) ne pilotaient que `Geo.localiser()`, que plus rien
+n'appelait. La seule acquisition, `localiserPrecis()`, force la haute précision
+et prend la durée de série pour délai. Un réglage qui ne fait rien trompe l'agent.
+
+- Retirés : les deux champs de Configuration, leurs clés dans `CONFIG_DEFAUT`,
+  `Geo.localiser()`. `messageErreur` reste, la série s'en sert.
+- Aucune migration : `lireConfig` ne garde que les clés de `CONFIG_DEFAUT`, les
+  anciennes valeurs stockées disparaissent à la lecture suivante.
+- Vérifié (Playwright jetable, géolocalisation simulée) : champs absents, case
+  Lambert toujours là, config réenregistrée sans les deux clés, série GPS menée
+  à terme sans erreur JavaScript. `audit-responsive` et `audit-pwa` sans défaut.
+- **Défaut trouvé au passage, non corrigé :** enregistrer la configuration
+  efface `fondCarte` et `fondsCarte` (voir reste à faire).
+
+---
+
+## 17/11/2026 — « Lier un existant » n'écrase plus un fichier refusé
+
+**Défaut (reste à faire) :** `actionOuvrirFichier` appelait `synchroniserFichier`
+même quand `fusionnerReleves` refusait le fichier. Résultat : un export SIG, un
+fichier d'une autre filière ou un fichier illisible choisi par erreur était
+remplacé par les seuls relevés du navigateur. Cas aggravant découvert : un
+fichier *mixte* (quelques lignes d'une autre filière) était accepté
+partiellement puis réécrit sans ces lignes — perte silencieuse.
+
+- `actionOuvrirFichier` passe désormais par `reprendreFichierDuDossier`, comme le
+  dossier de travail : même critère de refus, une seule règle.
+- Refus ou lecture impossible : la poignée enregistrée par le sélecteur est
+  annulée. Si une liaison existait avant, elle est remise via le nouveau
+  `Store.restaurerFichier` ; sinon la filière est déliée. Toast explicite.
+- Arbitrage : un fichier mixte est refusé en bloc plutôt qu'importé en partie —
+  on ne peut pas le relier sans le réécrire, donc sans détruire les lignes
+  étrangères.
+- Vérifié : script Playwright jetable sur vrais fichiers (OPFS), six cas
+  (annulation, étranger, SIG, illisible, mixte, valide) + refus après une liaison
+  valide : quatre fichiers refusés intacts, liaison précédente conservée, fichier
+  valide importé et réécrit. Le même script sur l'ancien code montre les quatre
+  fichiers écrasés. Limite : Chromium headless plante en stockant une poignée
+  OPFS dans IndexedDB ; la table des poignées a été simulée en mémoire, la ligne
+  `idbSet` de `restaurerFichier` n'est donc pas couverte par ce test.
+- `audit-responsive` et `audit-pwa` sans défaut. Pour les lancer ici, `playwright`
+  doit être résolvable depuis `tests/` (imports ESM) : lien temporaire
+  `/home/user/node_modules` → `/opt/node-tools/node_modules`, retiré après.
+
+---
+
 ## 26/10/2026 (suite) — Nouvelle adresse après transfert du dépôt
 
 **Constat en vérifiant la PR n° 22 :** `yoann-cramatte.github.io/Groma/` répond

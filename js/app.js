@@ -11,6 +11,7 @@
   var Csv = global.GromaCsv;
   var Geojson = global.GromaGeojson;
   var Geo = global.GromaGeo;
+  var Tuiles = global.GromaTuiles;
   var Carte = global.GromaCarte;
   var Catalogue = global.GromaCatalogue;
   var D = Cfg.DECIMALES;
@@ -282,9 +283,10 @@
   }
 
   /**
-   * Un fichier déjà présent dans le dossier n'est réécrit qu'après avoir été
-   * relu. Illisible, ou d'une autre filière : il est laissé intact et non relié
-   * — l'écraser détruirait un travail qu'on n'a pas su lire.
+   * Un fichier existant — trouvé dans le dossier ou lié à la main — n'est
+   * réécrit qu'après avoir été relu. Illisible, export SIG ou d'une autre
+   * filière, même pour une seule ligne : il est laissé intact et non relié —
+   * l'écraser détruirait un travail qu'on n'a pas su lire.
    */
   function reprendreFichierDuDossier(cle, texte) {
     if (!texte || !texte.trim()) return true;
@@ -1447,7 +1449,12 @@
       urls: fonds,
       fond: fonds[etat.config.fondCarte] ? etat.config.fondCarte : Object.keys(fonds)[0],
       etendueMinM: ETENDUE_CARTE_M,
-      surChangement: function () { surChangementCarte(filiereId); },
+      surChangement: function () {
+        surChangementCarte(filiereId);
+        // Le centre de la carte, pas le GPS : faire glisser la carte au bout
+        // d'une rue longue la charge aussi.
+        if (carte) Tuiles.autour(fonds[carte.fond()], carte.centre());
+      },
       surTuiles: function (t) {
         message.textContent = t.perdu
           ? 'Fond de carte indisponible — réseau absent ou service injoignable. '
@@ -1630,14 +1637,9 @@
 
     var gps = el('div', { classe: 'grille' }, [
       champConfig('precisionMax', 'Seuil d\'alerte de précision (m)', 'number', { min: 1, max: 500, step: 1 }),
-      champConfig('timeoutGps', 'Délai maximal d\'acquisition (s)', 'number', { min: 5, max: 120, step: 1 }),
       champConfig('dureeAffinage', 'Durée de la mesure affinée (s)', 'number', { min: 5, max: 300, step: 1 }),
       el('div', { classe: 'champ' }, [
         el('label', { texte: 'Options' }),
-        el('div', { classe: 'case' }, [
-          el('input', { type: 'checkbox', id: 'cfg-hautePrecision' }),
-          el('label', { for: 'cfg-hautePrecision', texte: 'Haute précision GPS' })
-        ]),
         el('div', { classe: 'case' }, [
           el('input', { type: 'checkbox', id: 'cfg-afficherLambert' }),
           el('label', { for: 'cfg-afficherLambert', texte: 'Calculer les coordonnées Lambert 93' })
@@ -2163,36 +2165,42 @@
     document.getElementById('cfg-operateur').value = c.operateur;
     document.getElementById('cfg-collectivite').value = c.collectivite;
     document.getElementById('cfg-precisionMax').value = c.precisionMax;
-    document.getElementById('cfg-timeoutGps').value = c.timeoutGps;
     document.getElementById('cfg-dureeAffinage').value = c.dureeAffinage;
-    document.getElementById('cfg-hautePrecision').checked = !!c.hautePrecision;
     document.getElementById('cfg-afficherLambert').checked = !!c.afficherLambert;
     document.getElementById('cfg-separateur').value = c.separateur;
     document.getElementById('cfg-theme').value = c.theme;
   }
 
+  /**
+   * Le formulaire ne porte qu'une partie de la configuration : les fonds de
+   * carte s'enregistrent ailleurs (bloc Fonds, barre de la carte). Reconstruire
+   * l'objet à partir du seul formulaire les effaçait sans message — on part
+   * donc de la configuration en place et on n'écrase que ses propres champs.
+   */
   function enregistrerConfiguration() {
-    etat.config = {
-      operateur: document.getElementById('cfg-operateur').value.trim(),
-      collectivite: document.getElementById('cfg-collectivite').value.trim(),
-      precisionMax: Math.max(1, Number(document.getElementById('cfg-precisionMax').value) || 20),
-      timeoutGps: Math.max(5, Number(document.getElementById('cfg-timeoutGps').value) || 20),
-      dureeAffinage: Math.max(5, Number(document.getElementById('cfg-dureeAffinage').value) || 30),
-      hautePrecision: document.getElementById('cfg-hautePrecision').checked,
-      afficherLambert: document.getElementById('cfg-afficherLambert').checked,
-      separateur: document.getElementById('cfg-separateur').value,
-      theme: document.getElementById('cfg-theme').value
-    };
+    var c = {};
+    Object.keys(etat.config).forEach(function (k) { c[k] = etat.config[k]; });
+    c.operateur = document.getElementById('cfg-operateur').value.trim();
+    c.collectivite = document.getElementById('cfg-collectivite').value.trim();
+    c.precisionMax = Math.max(1, Number(document.getElementById('cfg-precisionMax').value) || 20);
+    c.dureeAffinage = Math.max(5, Number(document.getElementById('cfg-dureeAffinage').value) || 30);
+    c.afficherLambert = document.getElementById('cfg-afficherLambert').checked;
+    c.separateur = document.getElementById('cfg-separateur').value;
+    c.theme = document.getElementById('cfg-theme').value;
+    etat.config = c;
     Store.ecrireConfig(etat.config);
     synchroniserTout();
     synchroniserParametres();
     toast('Configuration enregistrée.', 'succes');
   }
 
+  var jetonStats = 0;
+
   function rafraichirStats() {
     var hote = document.getElementById('cfg-stats');
     if (!hote) return;
     vider(hote);
+    var jeton = ++jetonStats;
     Cfg.FILIERES.forEach(function (f) {
       hote.appendChild(el('div', { classe: 'stat', style: '--couleur-filiere:' + f.couleur }, [
         el('div', { classe: 'stat-valeur', texte: String(pointsDe(f.id).length) }),
@@ -2203,6 +2211,17 @@
       el('div', { classe: 'stat-valeur', texte: String(etat.points.length) }),
       el('div', { classe: 'stat-label', texte: 'Total' })
     ]));
+    // L'agent doit savoir sur quoi compter hors réseau : le navigateur peut
+    // vider cette réserve sans prévenir.
+    Tuiles.bilan().then(function (b) {
+      // Réponse asynchrone : un rafraîchissement plus récent a déjà reconstruit le bloc.
+      if (!b || jeton !== jetonStats) return;
+      var mo = b.octets / (1024 * 1024);
+      hote.appendChild(el('div', { classe: 'stat', title: 'Tuiles gardées autour des lieux de travail, oubliées après sept jours sans usage.' }, [
+        el('div', { classe: 'stat-valeur', texte: (mo < 10 ? mo.toFixed(1) : String(Math.round(mo))) + ' Mo' }),
+        el('div', { classe: 'stat-label', texte: 'Carte hors ligne' })
+      ]));
+    });
     rafraichirEtatFichier();
   }
 
@@ -2249,19 +2268,44 @@
     }).catch(function () { /* l'utilisateur a annulé le sélecteur */ });
   }
 
+  /**
+   * Même règle que le dossier de travail : un fichier qu'on n'a pas su
+   * reprendre n'est jamais réécrit. Le synchroniser quand même le remplaçait
+   * par les seuls relevés du navigateur — un export SIG, ou un fichier d'une
+   * autre filière choisi par erreur, était détruit sans retour.
+   */
   function actionOuvrirFichier(filiereId) {
-    Store.ouvrirFichierExistant(filiereId).then(function () {
+    var precedent = null;
+    var choisi = false;
+
+    function annulerLiaison() {
+      return precedent ? Store.restaurerFichier(filiereId, precedent) : Store.oublierFichier(filiereId);
+    }
+
+    Store.handleCourant(filiereId).then(function (h) {
+      precedent = h;
+      return Store.ouvrirFichierExistant(filiereId);
+    }).then(function () {
+      choisi = true;
       return Store.lireFichier(filiereId);
     }).then(function (texte) {
-      if (texte && texte.trim()) fusionnerReleves(texte, filiereId);
-      return synchroniserFichier(filiereId);
+      if (reprendreFichierDuDossier(filiereId, texte)) return synchroniserFichier(filiereId);
+      return annulerLiaison().then(function () {
+        toast('Fichier refusé et laissé intact : illisible, export SIG ou relevés d\'une autre filière.'
+          + (precedent ? ' La liaison précédente est conservée.' : ''), 'erreur');
+      });
+    }).catch(function () {
+      if (!choisi) return; // sélecteur annulé : rien n'a changé
+      return annulerLiaison().then(function () {
+        toast('Lecture du fichier impossible : il n\'a pas été relié.', 'erreur');
+      });
     }).then(function () {
       rafraichirBadgeFichier();
       rafraichirEtatFichier();
       rafraichirLiaison(filiereId);
       rafraichirStats();
       rafraichirListe(filiereId);
-    }).catch(function () { /* annulé */ });
+    });
   }
 
   function actionDelierFichier(filiereId) {
@@ -2473,6 +2517,7 @@
     suivreHauteurEntete();
     brancherClavier();
     avertirContexte();
+    Tuiles.purger();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', demarrer);

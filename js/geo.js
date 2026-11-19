@@ -24,42 +24,6 @@
     }
   }
 
-  /**
-   * @param {{hautePrecision:boolean, timeoutGps:number}} options
-   * @returns {Promise<{latitude:number, longitude:number, altitude:?number, precision:number, horodatage:string}>}
-   */
-  function localiser(options) {
-    var o = options || {};
-    return new Promise(function (resolve, reject) {
-      if (!disponible()) {
-        reject(new Error("Ce navigateur n'expose pas l'API de géolocalisation."));
-        return;
-      }
-      if (!contexteSecurise()) {
-        reject(new Error('Contexte non sécurisé : servez la page en HTTPS ou http://localhost.'));
-        return;
-      }
-      global.navigator.geolocation.getCurrentPosition(
-        function (pos) {
-          var c = pos.coords;
-          resolve({
-            latitude: c.latitude,
-            longitude: c.longitude,
-            altitude: c.altitude === null || isNaN(c.altitude) ? null : c.altitude,
-            precision: c.accuracy,
-            horodatage: new Date(pos.timestamp).toISOString()
-          });
-        },
-        function (err) { reject(new Error(messageErreur(err))); },
-        {
-          enableHighAccuracy: o.hautePrecision !== false,
-          timeout: (o.timeoutGps || 20) * 1000,
-          maximumAge: 0
-        }
-      );
-    });
-  }
-
   // --- Acquisition affinée -------------------------------------------------
 
   var RAYON_LAT_M = 110540;  // mètres par degré de latitude
@@ -127,6 +91,10 @@
 
   /**
    * Acquisition continue pendant `dureeAffinage` secondes, puis agrégation.
+   * Seule voie d'acquisition : la haute précision y est toujours demandée, et
+   * la durée de la série tient lieu de délai. Il n'y a donc ni case « haute
+   * précision » ni délai à régler — ces deux réglages ont existé pour une
+   * acquisition ponctuelle disparue, et ne pilotaient plus rien.
    *
    * @returns {{promesse: Promise, arreter: function}} `arreter()` clôt la série
    *          immédiatement et agrège ce qui a été collecté.
@@ -206,7 +174,6 @@
   }
 
   global.GromaGeo = {
-    localiser: localiser,
     localiserPrecis: localiserPrecis,
     distanceM: distanceM,
     disponible: disponible,

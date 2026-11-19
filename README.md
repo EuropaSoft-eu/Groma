@@ -539,6 +539,38 @@ C'est la **seule** partie de l'application qui sort sur le réseau. Sans connexi
 fenêtre le dit et reste utilisable : repère, coordonnées et validation fonctionnent,
 seul le fond manque. Le reste de l'application n'émet aucune requête.
 
+#### Carte du village en cours, gardée hors ligne
+
+Dès qu'une mesure s'ouvre, la carte se charge autour de son centre et reste
+disponible sans réseau :
+
+| Cercle | Rayon | Zooms | Sert à |
+|---|---|---|---|
+| Grand | 1 km | 14 à 17 | se repérer dans le village |
+| Petit | 300 m | 18 et 19 | recaler le viseur sur un tampon |
+
+- Les cercles suivent **le centre de la carte**, donc le GPS comme les gestes :
+  au bout d'une rue longue, faire glisser la carte charge la suite. Un nouveau
+  chargement part après 150 m ; seules les tuiles manquantes sont téléchargées.
+- Seul le **fond affiché** est gardé.
+- Une tuile qui **n'a pas servi depuis sept jours est oubliée** : la carte gardée
+  reste récente. Plafond de sécurité : 200 Mo, les plus anciennes partent d'abord.
+- Ordre de grandeur mesuré (photo, 17/11/2026) : **314 tuiles, 3,8 Mo** par lieu.
+- Configuration → statistiques affiche la place occupée (« Carte hors ligne »).
+
+**Le chargement se fait sur place, réseau requis.** Pour un village sans
+couverture mobile : ouvrir une mesure au bureau et faire glisser la carte jusqu'au
+village avant de partir. Le navigateur peut vider cette réserve de lui-même,
+surtout sur iPhone et iPad.
+
+Conditions de la Géoplateforme (CGU du 15/10/2024, cartes.gouv.fr) : le service de
+tuiles WMTS est « non soumis à limite d'usage », et aucune clause lue n'interdit
+de garder des tuiles — aucune ne l'autorise expressément non plus. Une
+confirmation écrite de l'IGN est recommandée avant un déploiement en service. Un
+fond personnalisé dont le serveur refuse le CORS n'est simplement pas gardé ; ne
+pas y mettre OpenStreetMap, dont la politique d'usage proscrit ce type de
+téléchargement.
+
 > Les fonds par défaut sont définis dans `js/carte.js` (objet `FONDS`). Les
 > remplacer durablement pour un poste se fait depuis Configuration, sans éditer
 > le code.
@@ -638,7 +670,7 @@ Paris Notre-Dame `48.8566 ; 2.3522` → `X = 652 469 m ; Y = 6 862 035 m`.
 .
 ├── index.html
 ├── manifest.webmanifest # PWA : nom, icônes, mode plein écran
-├── service-worker.js    # cache hors ligne de la coquille applicative
+├── service-worker.js    # cache hors ligne de la coquille ; sert la carte gardée
 ├── favicon.svg          # logo arrondi : onglet du navigateur et en-tête de l'application
 ├── icons/               # logo.svg (source) et icônes PWA, régénérées par
 │                        # node icons/generer-icones.mjs
@@ -654,6 +686,7 @@ Paris Notre-Dame `48.8566 ; 2.3522` → `X = 652 469 m ; Y = 6 862 035 m`.
 │   ├── csv.js           # sérialisation / lecture RFC 4180
 │   ├── store.js         # localStorage + IndexedDB + fichier lié
 │   ├── geo.js           # API Geolocation
+│   ├── tuiles.js        # carte gardée hors ligne autour du lieu de travail
 │   └── app.js           # construction de l'interface
 ├── tests/               # audit d'affichage (Playwright, hors application)
 ├── docs/RGPD.md
@@ -671,9 +704,10 @@ Ajouter un *champ* aux relevés, en revanche, se fait dans `js/config.js` :
 
 ## Limites connues
 
-- **La carte exige du réseau.** L'application est installable et fonctionne hors
-  ligne, mais les tuiles ne sont pas mises en réserve : elles viennent de l'IGN, et
-  une carte périmée sur un relevé vaut moins qu'une carte absente qui le dit. Hors couverture, on relève au GPS sans recaler à l'œil.
+- **La carte exige du réseau au premier passage.** Seuls les lieux où la carte a
+  servi depuis moins de sept jours restent disponibles hors ligne (voir
+  « Carte du village en cours »). Ailleurs, sans couverture, on relève au GPS sans
+  recaler à l'œil.
 - Pas de photo rattachée aux points.
 - L'import fusionne sur l'identifiant `id` ; deux relevés du même ouvrage saisis sur
   deux appareils différents produisent deux lignes.
